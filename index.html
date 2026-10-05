@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Leerlingen analyseren een voorgelezen verhaal en bouwen er een spel van.">
+<title>Verhaalbouwers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: één kolom-app met vaste kopbalk; werkruimtes in blokken zonder afgeronde hoeken, kleuren uit het stichtingspalet. Bewust één licht thema (klas, digibord, print). */
+:root{
+  color-scheme: light;
+  --paper:#F3F4F8; --surface:#FFFFFF; --ink:#1F2B5D; --ink-2:#465078; --line:#C6CBDD; --line-2:#E3E6EF;
+  --primary:#095F6D; --primary-hover:#06454F; --focus:#1F58A8;
+  --begin:#564A9F; --begin-t:#ECEBF6;
+  --probleem:#5F060D; --probleem-t:#FBE6E6;
+  --spanning:#5C2266; --spanning-t:#F4E7F1;
+  --oplossing:#095F6D; --oplossing-t:#E1F3F6;
+  --einde:#1F2B5D; --einde-t:#E6E9F3;
+  --warn:#5F060D; --ok:#0E6936; --ok-t:#E5F3E0;
+  --yel:#F3F199;
+  --font: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --fs-s: .875rem; --fs-b: 1rem; --fs-m: 1.125rem; --fs-l: 1.5rem; --fs-xl: 2.125rem;
+}
+*{box-sizing:border-box}
+html{font-size:17px}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);line-height:1.5;margin:0}
+h1,h2,h3{line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:var(--fs-xl);font-weight:700}
+h2{font-size:var(--fs-l);font-weight:700}
+h3{font-size:var(--fs-m);font-weight:600}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* Kopbalk */
+.top{background:var(--surface);border-bottom:2px solid var(--ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.top-in{max-width:1320px;margin:0 auto;padding-inline:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;min-height:68px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.25rem;letter-spacing:-.01em}
+.brand svg{width:46px;height:36px}
+.nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+@media (max-width:700px){.top{position:static}}
+@media (max-width:860px){.storyline{display:none}}
+.nav button{min-height:44px;padding:0 14px;border:2px solid transparent;background:none;font-weight:500;cursor:pointer}
+.nav button[aria-current="page"]{border-color:var(--ink);background:var(--ink);color:#fff}
+.nav button:not([aria-current="page"]):hover{border-color:var(--line)}
+.storyline{font-size:var(--fs-s);color:var(--ink-2);flex:1 1 120px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+main{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+
+/* Knoppen en velden */
+.btn{min-height:44px;padding:0 18px;border:2px solid var(--ink);background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn:hover{background:var(--line-2)}
+.btn-p{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-p:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn[disabled]{background:var(--line-2);border-color:var(--line);color:#6A7190;cursor:not-allowed}
+.btn-s{min-height:40px;padding:0 12px;font-size:var(--fs-s)}
+.ibtn{width:40px;height:40px;border:2px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0}
+.ibtn:hover{border-color:var(--ink)}
+.ibtn[disabled]{opacity:.4;cursor:not-allowed}
+.ibtn svg{width:20px;height:20px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label,.lbl{font-weight:600;font-size:var(--fs-b)}
+.hint{font-size:var(--fs-s);color:var(--ink-2)}
+input[type=text],input[type=password],select,textarea{border:2px solid var(--line);background:var(--surface);padding:9px 12px;min-height:44px;width:100%;border-radius:0}
+input[type=text]:hover,select:hover,textarea:hover{border-color:#8E95B3}
+textarea{resize:vertical;min-height:72px;line-height:1.4}
+.chk{display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:6px 0}
+.chk input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--primary);flex-shrink:0}
+
+/* Panelen */
+.panel{background:var(--surface);border:2px solid var(--line-2);padding:24px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel.strong{border-color:var(--ink)}
+.kicker{font-size:var(--fs-s);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.head p{color:var(--ink-2);max-width:62ch}
+.block-h{display:flex;align-items:center;gap:12px}
+.block-h .sq{width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:var(--fs-s);background:var(--ink)}
+.note{background:var(--yel);padding:12px 16px;font-size:var(--fs-s);border:2px solid #D9D66A}
+.status{display:inline-flex;align-items:center;gap:8px;font-size:var(--fs-s);font-weight:600;padding:4px 10px;border:2px solid currentColor}
+.status.wacht{color:var(--probleem)}
+.status.ok{color:var(--ok)}
+.status.neutral{color:var(--ink-2)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.grid2,.grid3{grid-template-columns:minmax(0,1fr)}}
+
+/* Instellen */
+.setup{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:28px;align-items:start}
+@media (max-width:1000px){.setup{grid-template-columns:minmax(0,1fr)}}
+.goal{border:2px solid var(--line);background:var(--surface);padding:18px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:10px;min-width:0}
+.goal:hover{border-color:#8E95B3}
+.goal[aria-pressed="true"]{border:3px solid var(--ink);padding:17px;box-shadow:6px 6px 0 var(--ink)}
+.goal .ill{height:72px;display:flex;align-items:flex-end}
+.goal .ill svg{height:72px;width:auto}
+.goal h3{font-size:1.1rem}
+.goal .game{font-size:var(--fs-s)}
+.goal .fits{font-size:var(--fs-s);color:var(--ink-2)}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:2px solid var(--ink)}
+.seg button{min-height:46px;border:0;background:var(--surface);cursor:pointer;font-weight:500}
+.seg button+button{border-left:2px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:600}
+.grp{border:2px solid var(--line-2);padding:14px;display:grid;grid-template-columns:minmax(0,1.2fr) auto auto auto;gap:14px;align-items:center}
+@media (max-width:700px){.grp{grid-template-columns:minmax(0,1fr)}}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper output{min-width:28px;text-align:center;font-weight:700}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:.8rem;padding:2px 8px;border:1.5px solid var(--line);background:var(--surface)}
+button.chip{cursor:pointer;min-height:36px;font-size:var(--fs-s);font-weight:500;border-width:2px}
+button.chip[aria-expanded="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.flow{display:flex;flex-direction:column;gap:10px;counter-reset:f}
+.flow li{display:flex;gap:12px;align-items:flex-start;list-style:none}
+.flow li::before{counter-increment:f;content:counter(f);width:26px;height:26px;background:var(--ink);color:#fff;font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+ol.flow{padding:0;margin:0}
+
+/* Lesoverzicht */
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:12px;border-bottom:2px solid var(--line-2);vertical-align:top}
+th{font-size:var(--fs-s);color:var(--ink-2);font-weight:600}
+.tbl{overflow-x:auto;position:relative}
+
+/* Groepskeuze */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.tile{border:2px solid var(--ink);background:var(--surface);padding:20px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:10px;min-height:150px}
+.tile:hover{box-shadow:6px 6px 0 var(--ink)}
+.tile .nm{font-size:1.3rem;font-weight:700}
+
+/* Stappenbalk */
+.steps{display:flex;gap:0;flex-wrap:wrap;border:2px solid var(--ink);background:var(--surface)}
+.steps li{list-style:none;flex:1 1 140px}
+.steps button{width:100%;min-height:52px;border:0;background:none;display:flex;align-items:center;gap:10px;padding:0 14px;font-weight:500;cursor:pointer;text-align:left}
+.steps li+li button{border-left:2px solid var(--line-2)}
+.steps button[disabled]{color:#7A809C;cursor:not-allowed}
+.steps .n{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:2px solid currentColor;font-size:.8rem;font-weight:700;flex-shrink:0}
+.steps button[aria-current="step"]{background:var(--ink);color:#fff;font-weight:600}
+.steps button[aria-current="step"] .n{background:#F3F199;color:var(--ink);border-color:#F3F199}
+.steps .done .n{background:var(--ok);border-color:var(--ok);color:#fff}
+ul.steps{padding:0;margin:0}
+
+/* Werkruimte */
+.work{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:1050px){.work{grid-template-columns:minmax(0,1fr)}}
+.side{display:flex;flex-direction:column;gap:16px}
+.term-x{background:var(--einde-t);padding:10px 12px;font-size:var(--fs-s);border-left:0}
+
+/* Verhaalberg */
+.berg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:stretch}
+.col{display:flex;flex-direction:column;min-width:0}
+.col .spacer{flex-shrink:0}
+.col .cap{color:#fff;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.col .cap b{font-size:1rem}
+.col .cap span{font-size:.8rem;line-height:1.35;opacity:.95}
+.col .well{flex:1;padding:10px;display:flex;flex-direction:column;gap:10px;min-height:150px}
+.col.drop .well{outline:3px dashed var(--ink);outline-offset:-6px}
+.col .empty{font-size:var(--fs-s);color:var(--ink-2);border:2px dashed #9097B4;padding:10px;text-align:center}
+@media (max-width:1180px){.berg{grid-template-columns:minmax(0,1fr)}.col .spacer{display:none}.col .well{min-height:0}}
+.ev{background:var(--surface);border:2px solid var(--ink);display:flex;flex-direction:column;min-width:0}
+.ev[draggable="true"]{cursor:grab}
+.ev .evtop{display:flex;align-items:center;gap:6px;padding:6px;border-bottom:2px solid var(--line-2)}
+.ev .num{width:28px;height:28px;color:#fff;font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ev textarea{border:0;min-height:76px;padding:8px 10px;font-size:.95rem}
+.ev .evbot{display:flex;border-top:2px solid var(--line-2)}
+.ev .evbot select{border:0;min-height:40px;font-size:var(--fs-s);padding:6px 4px;flex:1;min-width:0}
+.ev .evbot .ibtn{border-width:0 0 0 2px;border-color:var(--line-2)}
+.picbtn{width:44px;height:44px;border:2px dashed #9097B4;background:var(--surface);cursor:pointer;padding:2px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.picbtn.has{border-style:solid;border-color:var(--line)}
+.picbtn svg,.picbtn img{width:100%;height:100%;display:block}
+.picbtn .plus{width:18px;height:18px}
+.ml{margin-left:auto}
+
+/* Kwartet en memory analyse */
+.pers{border:2px solid var(--ink);background:var(--surface);display:flex;flex-direction:column;min-width:0}
+.pers .ph{display:flex;gap:10px;align-items:center;padding:12px;color:#fff}
+.pers .ph input{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.55);color:#fff;font-weight:600}
+.pers .ph input::placeholder{color:rgba(255,255,255,.8)}
+.pers .pb{padding:14px;display:flex;flex-direction:column;gap:12px}
+.radios{display:flex;gap:0;border:2px solid var(--ink);width:max-content;max-width:100%}
+.radios label{display:flex;align-items:center;gap:8px;padding:0 14px;min-height:42px;cursor:pointer;font-weight:500}
+.radios label+label{border-left:2px solid var(--ink)}
+.radios input{accent-color:var(--primary);width:18px;height:18px}
+.pair{border:2px solid var(--ink);background:var(--surface);display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);min-width:0}
+.pair .side-a,.pair .side-b{padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.pair .link{display:flex;align-items:center;justify-content:center;background:var(--paper)}
+.pair .why{grid-column:1/-1;border-top:2px solid var(--line-2);padding:14px;display:flex;flex-direction:column;gap:8px}
+.pair .pt{grid-column:1/-1;display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:2px solid var(--line-2);flex-wrap:wrap}
+@media (max-width:700px){.pair{grid-template-columns:minmax(0,1fr)}.pair .link{height:44px}}
+
+/* Bord */
+.board{background:var(--surface);border:2px solid var(--line-2);overflow-x:auto;position:relative}
+.board svg{display:block;width:100%;min-width:640px;height:auto}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.legend li{list-style:none;display:flex;gap:10px;align-items:center;font-size:var(--fs-s);border:2px solid var(--line-2);background:var(--surface);padding:8px}
+.legend .sq{width:30px;height:30px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0}
+ul.legend{padding:0;margin:0}
+.vak{border:2px solid var(--ink);background:var(--surface);display:grid;grid-template-columns:160px minmax(0,1fr);min-width:0}
+.vak .vl{color:#fff;padding:14px;display:flex;flex-direction:column;gap:6px}
+.vak .vl .big{font-size:1.6rem;font-weight:700}
+.vak .vr{padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+@media (max-width:700px){.vak{grid-template-columns:minmax(0,1fr)}}
+
+/* Spelkaarten */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.kcard{border:2px solid var(--ink);background:var(--surface);display:flex;flex-direction:column;min-width:0}
+.kcard .kh{color:#fff;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-s);font-weight:600}
+.kcard .kb{padding:10px;display:flex;flex-direction:column;gap:8px}
+.kcard textarea{min-height:64px;font-size:.95rem}
+.kcard .kl{font-size:.78rem;color:var(--ink-2);display:flex;flex-direction:column;gap:2px}
+.kcard .kl b{color:var(--ink)}
+
+/* Spelen */
+.play{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:1050px){.play{grid-template-columns:minmax(0,1fr)}}
+.teams{display:flex;flex-direction:column;gap:8px}
+.team{display:flex;align-items:center;gap:10px;padding:8px 10px;border:2px solid var(--line-2)}
+.team.now{border-color:var(--ink);background:var(--paper)}
+.pawn{width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0}
+.die{width:72px;height:72px;border:3px solid var(--ink);background:var(--surface);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:8px;gap:2px}
+.die i{display:block;width:12px;height:12px;border-radius:50%;background:var(--ink);place-self:center;visibility:hidden}
+.die i.on{visibility:visible}
+.taskcard{border:3px solid var(--ink);background:var(--surface);display:flex;flex-direction:column}
+.taskcard .th{color:#fff;padding:12px 16px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.taskcard .tb{padding:16px;display:flex;flex-direction:column;gap:14px}
+.taskcard .opt{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:start;border:2px solid var(--line);padding:10px}
+.taskcard .opt b{width:36px;height:36px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.mcard{aspect-ratio:3/4;max-width:100%;border:2px solid var(--ink);background:var(--surface);cursor:pointer;padding:0;display:flex;flex-direction:column;text-align:left;overflow:hidden}
+.mcard .back{flex:1;display:flex;align-items:center;justify-content:center;background:var(--ink);width:100%}
+.mcard .back svg{width:60%;height:auto}
+.mcard .face{flex:1;display:flex;flex-direction:column;width:100%;min-height:0}
+.mcard .face .mh{color:#fff;font-size:.8rem;font-weight:600;padding:6px 8px}
+.mcard .face .mb{padding:8px;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.3;overflow:auto;min-height:0}
+.mcard .face .mb svg,.mcard .face .mb img{width:44px;height:44px}
+.mcard.gone{visibility:hidden}
+.mcard[disabled]{cursor:default}
+
+/* Uitleg */
+.prose{display:flex;flex-direction:column;gap:14px;max-width:72ch}
+.prose ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.toc{display:flex;gap:8px;flex-wrap:wrap}
+.toc a{color:var(--ink);font-weight:600;padding:8px 12px;border:2px solid var(--line);text-decoration:none}
+.toc a:hover{border-color:var(--ink)}
+dl.terms{display:grid;grid-template-columns:minmax(160px,220px) minmax(0,1fr);gap:0;margin:0}
+dl.terms dt,dl.terms dd{padding:10px 12px;border-bottom:2px solid var(--line-2);margin:0}
+dl.terms dt{font-weight:600}
+@media (max-width:600px){dl.terms{grid-template-columns:minmax(0,1fr)}dl.terms dt{border-bottom:0;padding-bottom:0}}
+
+/* Papier-voorbeeld */
+.sheets{display:flex;gap:20px;overflow-x:auto;padding-bottom:10px}
+.sheetwrap{flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.sheetwrap .cap2{font-size:var(--fs-s);font-weight:600}
+.sheetbox{width:238px;height:337px;overflow:hidden;border:2px solid var(--line);background:#fff;position:relative}
+.sheetbox .a4{transform:scale(.3);transform-origin:0 0;position:absolute;left:0;top:0}
+
+/* Dialogen */
+dialog{border:3px solid var(--ink);padding:0;max-width:min(860px,calc(100vw - 32px));width:100%;background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(31,43,93,.55)}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:2px solid var(--line-2);gap:12px}
+.db{padding:18px;display:flex;flex-direction:column;gap:18px;max-height:70vh;overflow:auto}
+.df{display:flex;gap:10px;justify-content:flex-end;padding:14px 18px;border-top:2px solid var(--line-2);flex-wrap:wrap}
+.picgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.picgrid button{border:2px solid var(--line-2);background:var(--surface);cursor:pointer;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.78rem}
+.picgrid button:hover{border-color:var(--ink)}
+.picgrid svg{width:48px;height:48px}
+.drawwrap{display:flex;gap:16px;flex-wrap:wrap}
+.drawwrap canvas{border:2px solid var(--ink);width:min(360px,100%);aspect-ratio:1/1;touch-action:none;background:#fff;cursor:crosshair}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.swatches label{width:40px;height:40px;border:2px solid var(--line);cursor:pointer;display:block;position:relative}
+.swatches input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.swatches label:has(input:checked){outline:3px solid var(--ink);outline-offset:1px}
+.swatches label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:3px}
+
+/* A4-werkbladen (voor voorbeeld en PDF) */
+.a4{width:794px;height:1123px;background:#fff;color:#1F2B5D;font-family:var(--font);padding:46px 50px;display:flex;flex-direction:column;gap:16px;overflow:hidden;line-height:1.4}
+.a4 .ah{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1F2B5D;padding-bottom:12px;gap:20px}
+.a4 .ah .t1{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
+.a4 .ah h2{font-size:28px}
+.a4 .ah .who{display:flex;flex-direction:column;gap:10px;width:270px;font-size:14px}
+.a4 .ln{display:flex;gap:8px;align-items:flex-end}
+.a4 .ln span:last-child{flex:1;border-bottom:1.5px solid #1F2B5D;height:20px}
+.a4 .wl{border-bottom:1.5px dotted #6B7290;height:26px}
+.a4 .box{border:2px solid #1F2B5D;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.a4 .lab{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.a4 .small{font-size:13px}
+.a4 .cb{width:16px;height:16px;border:2px solid #1F2B5D;flex-shrink:0;display:inline-block}
+.a4 .foot{margin-top:auto;display:flex;justify-content:space-between;font-size:12px;color:#465078;align-items:center}
+.a4 .cut{border:1.5px dashed #6B7290}
+.a4 ol,.a4 ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px;font-size:15px}
+#printArea{display:none}
+@media print{
+  body.printing > *:not(#printArea){display:none!important}
+  body.printing #printArea{display:block}
+  @page{size:A4;margin:0}
+  html,body{background:#fff}
+  .a4{page-break-after:always;break-after:page}
+}
+[hidden]{display:none!important}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+
+<dialog id="picDlg" aria-labelledby="picDlgT">
+  <div class="dh"><h2 id="picDlgT" style="font-size:1.25rem">Kies een beeld</h2><button class="btn btn-s" data-a="dlg-close" data-d="picDlg">Sluiten</button></div>
+  <div class="db" id="picDlgBody"></div>
+  <div class="df"><button class="btn" data-a="pic-none">Geen beeld</button><button class="btn" data-a="pic-draw">Zelf tekenen</button></div>
+</dialog>
+
+<dialog id="drawDlg" aria-labelledby="drawDlgT">
+  <div class="dh"><h2 id="drawDlgT" style="font-size:1.25rem">Teken een beeld</h2><button class="btn btn-s" data-a="dlg-close" data-d="drawDlg">Annuleren</button></div>
+  <div class="db">
+    <div class="drawwrap">
+      <canvas id="cv" width="480" height="480" aria-label="Tekenvlak. Teken met muis, pen of vinger. Wil je liever iets kiezen? Gebruik dan Beeld kiezen."></canvas>
+      <div class="stack" style="min-width:200px">
+        <fieldset style="border:0;padding:0;margin:0" class="stack"><legend class="lbl">Kleur</legend><div class="swatches" id="sw"></div></fieldset>
+        <fieldset style="border:0;padding:0;margin:0" class="stack"><legend class="lbl">Dikte</legend>
+          <div class="radios"><label><input type="radio" name="pen" value="4" id="pen4">Dun</label><label><input type="radio" name="pen" value="12" id="pen12" checked>Dik</label><label><input type="radio" name="pen" value="28" id="pen28">Blok</label></div>
+        </fieldset>
+        <button class="btn" data-a="draw-clear">Alles wissen</button>
+      </div>
+    </div>
+  </div>
+  <div class="df"><button class="btn btn-p" data-a="draw-save">Tekening gebruiken</button></div>
+</dialog>
+
+<div class="sr" aria-live="polite" id="live"></div>
+<div id="printArea"></div>
+
+<script>
+/* ---------- Basis ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let _id = 100; const uid = p => (p||'x') + (++_id);
+const live = msg => { const l = $('#live'); l.textContent = ''; setTimeout(() => l.textContent = msg, 30); };
+
+const PAL = {lav1:'#B2B5DB',lav2:'#9E85BE',lav3:'#564A9F',red1:'#F59395',red2:'#EE312D',red3:'#5F060D',yel1:'#F3F199',yel2:'#ECE828',yel3:'#A9B034',grn1:'#9DD08F',grn2:'#64BC46',grn3:'#0E6936',blu1:'#8D99CD',blu2:'#1F58A8',blu3:'#1F2B5D',pur1:'#CF95C3',pur2:'#A157A2',pur3:'#5C2266',tea1:'#C2E7EC',tea2:'#5EC8D8',tea3:'#095F6D',w:'#FFFFFF'};
+
+/* ---------- Bouwsteen-vormen ---------- */
+const R=(x,y,w,h,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+const C=(x,y,r,c)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+const T=(p,c)=>`<polygon points="${p}" fill="${c}"/>`;
+const Q=(cx,cy,r,d,c)=>{const sx=d[1]==='l'?-1:1,sy=d[0]==='t'?-1:1,sw=sx*sy>0?1:0;return `<path d="M${cx} ${cy}L${cx+sx*r} ${cy}A${r} ${r} 0 0 ${sw} ${cx} ${cy+sy*r}Z" fill="${c}"/>`;};
+const H=(cx,cy,r,d,c)=>{
+  if(d==='t')return `<path d="M${cx-r} ${cy}A${r} ${r} 0 0 1 ${cx+r} ${cy}Z" fill="${c}"/>`;
+  if(d==='b')return `<path d="M${cx-r} ${cy}A${r} ${r} 0 0 0 ${cx+r} ${cy}Z" fill="${c}"/>`;
+  if(d==='l')return `<path d="M${cx} ${cy-r}A${r} ${r} 0 0 0 ${cx} ${cy+r}Z" fill="${c}"/>`;
+  return `<path d="M${cx} ${cy-r}A${r} ${r} 0 0 1 ${cx} ${cy+r}Z" fill="${c}"/>`;};
+const P=PAL;
+
+/* Pictogrammen opgebouwd uit bouwstenen (48x48) */
+const ICON_CATS=[['personen','Personen en dieren'],['plaatsen','Plaatsen'],['voorwerpen','Voorwerpen'],['gebeurtenissen','Gebeurtenissen'],['probleem','Probleem en oplossing']];
+const ICONS=[
+ {id:'meisje',name:'meisje',cat:'personen',s:C(24,14,9,P.pur3)+C(34,10,4.5,P.pur3)+C(24,16,6.5,P.pur1)+T('11,45 24,24 37,45',P.pur2)},
+ {id:'jongen',name:'jongen',cat:'personen',s:C(24,15,7,P.pur1)+H(24,12,8,'t',P.blu2)+R(24,10,11,3,P.blu2)+R(14,25,20,20,P.blu3)},
+ {id:'volwassene',name:'volwassene',cat:'personen',s:C(24,10,6.5,P.pur1)+R(15,19,18,26,P.grn3)+T('20,19 24,26 28,19',P.grn1)},
+ {id:'oudere',name:'opa of oma',cat:'personen',s:C(21,12,6.5,P.pur1)+H(21,10,6.5,'t',P.lav1)+R(13,21,16,24,P.lav3)+R(35,22,3,23,P.blu3)+R(31,22,7,3,P.blu3)},
+ {id:'kat',name:'dier',cat:'personen',s:R(6,26,24,12,P.blu3)+R(28,14,14,14,P.blu3)+T('28,14 31.5,6 35,14',P.blu3)+T('35,14 38.5,6 42,14',P.blu3)+R(31,19,3,3,P.yel2)+R(37,19,3,3,P.yel2)+R(8,38,4,7,P.blu3)+R(24,38,4,7,P.blu3)+Q(6,26,6,'tl',P.blu2)},
+ {id:'vogel',name:'vogel',cat:'personen',s:T('3,17 12,24 9,32',P.tea3)+C(22,26,12,P.tea2)+Q(22,27,9,'bl',P.tea3)+T('33,21 43,25 33,29',P.yel3)+C(27,21,2.2,P.blu3)+R(19,38,2.5,7,P.blu3)+R(25,38,2.5,7,P.blu3)},
+ {id:'huis',name:'huis',cat:'plaatsen',s:R(10,24,28,20,P.red1)+T('6,26 24,8 42,26',P.red3)+R(22,32,7,12,P.red3)+R(13,29,6,6,P.yel1)},
+ {id:'kasteel',name:'kasteel',cat:'plaatsen',s:R(23,2,2,10,P.blu3)+R(25,2,8,5,P.red2)+R(8,18,32,26,P.lav2)+R(8,12,6,6,P.lav2)+R(21,12,6,6,P.lav2)+R(34,12,6,6,P.lav2)+R(19,33,10,11,P.lav3)+H(24,33,5,'t',P.lav3)},
+ {id:'bos',name:'bos',cat:'plaatsen',s:T('2,36 14,6 26,36',P.grn2)+R(12,36,4,9,P.red3)+T('20,40 33,13 46,40',P.grn3)+R(31,40,4,5,P.red3)},
+ {id:'zee',name:'zee',cat:'plaatsen',s:R(2,30,44,15,P.blu2)+H(9,30,7,'t',P.tea2)+H(24,30,7,'t',P.tea2)+H(39,30,7,'t',P.tea2)+C(36,12,6,P.yel2)},
+ {id:'stad',name:'stad',cat:'plaatsen',s:R(3,20,12,25,P.blu1)+R(15,8,13,37,P.blu2)+R(28,24,8,21,P.lav3)+R(36,15,9,30,P.blu3)+R(6,24,3,3,P.w)+R(18,12,3,3,P.w)+R(23,12,3,3,P.w)+R(18,18,3,3,P.w)+R(23,18,3,3,P.w)+R(39,19,3,3,P.w)+R(39,25,3,3,P.w)},
+ {id:'school',name:'school',cat:'plaatsen',s:R(23,2,2,9,P.blu3)+R(25,2,7,4,P.red2)+R(6,22,36,22,P.yel2)+T('4,24 24,10 44,24',P.yel3)+R(20,32,8,12,P.blu3)+R(10,28,6,6,P.w)+R(32,28,6,6,P.w)},
+ {id:'vuurtoren',name:'vuurtoren',cat:'plaatsen',s:T('19,11 2,4 2,18',P.yel1)+T('29,11 46,4 46,18',P.yel1)+T('18,44 20,16 28,16 30,44',P.red2)+T('19.4,24 28.6,24 28.9,29 19.1,29',P.w)+T('18.7,35 29.3,35 29.6,40 18.4,40',P.w)+R(19,9,10,7,P.yel2)+T('17,9 24,2 31,9',P.blu3)+R(12,43,24,3,P.blu3)},
+ {id:'berg',name:'berg',cat:'plaatsen',s:T('2,44 18,16 34,44',P.grn3)+T('14,44 32,8 46,44',P.grn2)+T('32,8 28,16 35.1,16',P.w)},
+ {id:'sleutel',name:'sleutel',cat:'voorwerpen',s:C(14,24,10,P.yel3)+C(14,24,4.5,P.w)+R(23,21.5,22,5,P.yel3)+R(34,26,4,7,P.yel3)+R(41,26,4,5,P.yel3)},
+ {id:'brief',name:'brief',cat:'voorwerpen',s:R(5,12,38,26,P.yel2)+T('5,12 24,27 43,12',P.yel3)},
+ {id:'boek',name:'boek',cat:'voorwerpen',s:R(5,11,19,28,P.blu2)+R(24,11,19,28,P.blu1)+R(23,11,2,28,P.blu3)+R(9,17,10,2,P.w)+R(9,22,10,2,P.w)+R(28,17,10,2,P.blu3)+R(28,22,10,2,P.blu3)},
+ {id:'kist',name:'schatkist',cat:'voorwerpen',s:R(7,14,34,8,P.red2)+R(7,22,34,20,P.red3)+R(7,22,34,3,P.yel2)+R(21,22,6,8,P.yel2)},
+ {id:'kroon',name:'kroon',cat:'voorwerpen',s:T('8,36 8,14 16,24 24,9 32,24 40,14 40,36',P.yel2)+R(8,36,32,6,P.yel3)+C(24,29,3,P.red2)+C(15,30,2.5,P.tea3)+C(33,30,2.5,P.tea3)},
+ {id:'telefoon',name:'telefoon',cat:'voorwerpen',s:R(15,4,18,40,P.blu3)+R(18,9,12,26,P.tea1)+C(24,39,2,P.w)},
+ {id:'storm',name:'storm',cat:'gebeurtenissen',s:C(15,20,8,P.blu1)+C(27,15,10,P.blu1)+C(36,21,7,P.blu1)+R(7,20,36,8,P.blu1)+T('26,28 18,38 24,38 20,47 33,33 27,33 31,28',P.yel3)},
+ {id:'nacht',name:'nacht',cat:'gebeurtenissen',s:R(2,2,44,44,P.blu3)+C(23,24,12,P.yel1)+C(29,19,10,P.blu3)+R(9,9,3,3,P.yel1)+R(38,36,3,3,P.yel1)+R(11,37,2,2,P.yel1)},
+ {id:'dag',name:'dag',cat:'gebeurtenissen',s:C(24,24,10,P.yel2)+R(22,2,4,8,P.yel3)+R(22,38,4,8,P.yel3)+R(2,22,8,4,P.yel3)+R(38,22,8,4,P.yel3)+R(8,8,5,5,P.yel3)+R(35,8,5,5,P.yel3)+R(8,35,5,5,P.yel3)+R(35,35,5,5,P.yel3)},
+ {id:'reis',name:'reis',cat:'gebeurtenissen',s:R(23,7,2,23,P.blu3)+T('25,9 25,28 39,28',P.yel2)+T('22,12 22,28 10,28',P.red1)+T('5,30 43,30 37,40 11,40',P.red2)+R(2,40,44,5,P.blu2)},
+ {id:'vuur',name:'vuur',cat:'gebeurtenissen',s:T('9,44 16,20 24,44',P.red2)+T('16,44 26,4 36,44',P.red2)+T('28,44 34,22 40,44',P.red2)+T('20,44 26,24 32,44',P.yel2)},
+ {id:'feest',name:'feest',cat:'gebeurtenissen',s:R(4,9,40,2,P.blu3)+T('6,11 12,24 18,11',P.red2)+T('18,11 24,24 30,11',P.yel2)+T('30,11 36,24 42,11',P.tea2)+R(10,32,4,4,P.pur2)+R(22,38,4,4,P.grn2)+R(34,31,4,4,P.blu2)+R(16,43,3,3,P.red2)},
+ {id:'vriendschap',name:'vriendschap',cat:'gebeurtenissen',s:C(17,19,9,P.red2)+C(31,19,9,P.red2)+T('8.5,22 39.5,22 24,40',P.red2)},
+ {id:'geheim',name:'geheim',cat:'gebeurtenissen',s:R(14,5,20,39,P.lav3)+R(17,8,14,15,P.lav2)+R(17,26,14,15,P.lav2)+C(29,26,2,P.yel2)},
+ {id:'gevaar',name:'gevaar',cat:'probleem',s:T('24,4 46,42 2,42',P.red2)+R(22,16,4,14,P.w)+R(22,33,4,4,P.w)},
+ {id:'kapot',name:'kapotte brug',cat:'probleem',s:R(2,38,44,8,P.blu2)+R(2,18,18,5,P.tea3)+R(6,23,6,15,P.tea3)+T('28,22 46,18 46,23 28,27',P.tea3)+R(36,22,6,16,P.tea3)},
+ {id:'ruzie',name:'ruzie',cat:'probleem',s:C(10,14,6,P.red1)+R(4,22,12,22,P.red3)+C(38,14,6,P.red1)+R(32,22,12,22,P.red3)+T('20,10 28,10 22,20 28,20 20,32 23,22 19,22',P.yel3)},
+ {id:'brug',name:'brug',cat:'probleem',s:R(2,40,44,6,P.blu2)+`<path d="M4 20H44V40H36A12 12 0 0 0 12 40H4Z" fill="${P.tea2}"/>`+R(2,15,44,5,P.tea3)},
+ {id:'hulp',name:'hulp',cat:'probleem',s:R(18,6,12,36,P.tea2)+R(6,18,36,12,P.tea2)+R(18,18,12,12,P.tea3)},
+ {id:'idee',name:'idee',cat:'probleem',s:C(24,18,12,P.yel2)+R(18,28,12,8,P.yel3)+R(20,36,8,4,P.blu3)+R(23,12,2,8,P.w)},
+];
+const iconById = id => ICONS.find(i=>i.id===id);
+const iconSVG = (id, label) => { const i=iconById(id); if(!i) return ''; return `<svg viewBox="0 0 48 48" role="img" aria-label="${esc(label||i.name)}">${i.s}</svg>`; };
+const picHTML = (pic, label) => !pic ? '' : pic.type==='icon' ? iconSVG(pic.id, label) : `<img src="${pic.data}" alt="${esc(label||'tekening')}">`;
+
+/* Logo van de stichting */
+const LOGO = (a='#5EC8D8', b='#5C2266') => `<svg viewBox="52 54 168 132" aria-hidden="true"><path fill="${a}" d="M61.4 87C56.5 96.5 54.1 107.7 54.1 120.3C54.1 132.8 56.5 143.9 61.4 153.5C63.3 157.3 65.6 160.9 68.3 164.1L92.2 140.1C90 134.4 88.9 127.7 88.9 119.8C88.9 112.1 90 105.4 92.2 100C94.4 94.5 97.5 90.3 101.4 87.5C105.4 84.6 110 83.1 115.3 83.1C121.6 83.1 126.7 85 130.6 88.8C132.8 91 134.5 93.6 135.8 96.5L158.5 73.8C154.3 69.1 149.2 65.3 143.1 62.3C135 58.4 125.5 56.4 114.7 56.4C102.2 56.4 91.5 59.1 82.4 64.5C73.3 69.9 66.3 77.4 61.4 87Z"/><path fill="${b}" d="M137.7 103.7L170.1 103.7C169.6 94.1 167 85.8 162.3 78.7C161.1 77 159.8 75.3 158.5 73.8L135.8 96.5C136.7 98.7 137.3 101.1 137.7 103.7Z"/><path fill="${b}" d="M162.4 161.2C167 154 169.5 145.7 170.1 136.3L137.7 136.3C137.1 140.6 135.7 144.3 133.7 147.4C131.6 150.5 129 152.8 125.9 154.5C122.7 156.1 119.2 156.9 115.3 156.9C110 156.9 105.3 155.4 101.4 152.5C97.4 149.7 94.4 145.5 92.2 140L68.2 164C72.2 168.7 76.8 172.7 82.2 175.9C91.3 181.3 102.2 184 114.9 184C125.9 184 135.4 182 143.4 178C151.5 173.9 157.8 168.3 162.4 161.2Z"/><circle fill="${b}" cx="193.7" cy="159.9" r="23.6"/></svg>`;
+
+/* Illustraties per leerdoel, ook uit bouwstenen */
+const ILL = {
+ pad: `<svg viewBox="0 0 120 72" aria-hidden="true">${R(0,56,24,16,'#ECEBF6')+R(24,40,24,32,'#FBE6E6')+R(48,8,24,64,'#F4E7F1')+R(72,40,24,32,'#E1F3F6')+R(96,56,24,16,'#E6E9F3')+R(2,46,10,10,P.lav3)+R(26,30,10,10,P.red3)+R(50,0,10,8,P.pur3)+Q(60,8,8,'tl',P.pur3)+R(74,30,10,10,P.tea3)+R(98,46,10,10,P.blu3)}</svg>`,
+ kwartet: `<svg viewBox="0 0 120 72" aria-hidden="true">${R(4,14,36,52,P.pur1)+R(26,8,36,56,P.pur2)+R(48,4,40,64,P.pur3)+C(68,24,9,P.pur1)+T('54,58 68,36 82,58',P.pur1)+R(92,40,12,12,P.yel2)+R(104,28,12,12,P.yel3)+R(104,52,12,12,P.yel2)}</svg>`,
+ memory: `<svg viewBox="0 0 120 72" aria-hidden="true">${R(4,4,48,64,P.red3)+H(52,36,22,'l',P.red1)+R(68,4,48,64,P.tea3)+H(68,36,22,'r',P.tea1)+R(56,32,8,8,P.blu3)}</svg>`,
+};
+
+/* ---------- Vakinhoud ---------- */
+const GOALS = {
+ pad:{name:'Volgorde en opbouw',game:'Verhaalpad',kind:'bordspel',fits:'Past bij verhalen met een duidelijke reeks gebeurtenissen en een spanningsboog.',does:'Leerlingen zetten de gebeurtenissen op de verhaalberg: begin, probleem, spannendste moment, oplossing en einde. Daarna wordt de berg hun speelbord.'},
+ kwartet:{name:'Hoofd- en bijpersonages',game:'Personagekwartet',kind:'kaartspel',fits:'Past bij verhalen met meerdere duidelijke personages, zoals helpers en tegenspelers.',does:'Leerlingen bepalen wie de hoofdpersoon is en wie de bijfiguren zijn. Per personage maken ze vier kaarten: wie het is, wat het wil, wat het doet en hoe het afloopt.'},
+ memory:{name:'Probleem en oplossing, oorzaak en gevolg',game:'Verbandenmemory',kind:'memoryspel',fits:'Past bij verhalen met een duidelijk probleem, of met gebeurtenissen die elkaar veroorzaken.',does:'Leerlingen zoeken paren die bij elkaar horen. Tijdens het spelen mag je een paar alleen houden als je uitlegt waarom de kaarten bij elkaar horen.'},
+};
+const PHASES = [
+ {id:'begin',name:'Begin',q:'Hoe begint het verhaal? Wie is de hoofdpersoon, en waar en wanneer speelt het zich af?',h:.14},
+ {id:'probleem',name:'Probleem',q:'Wat gaat er mis, of wat wil de hoofdpersoon graag?',h:.5},
+ {id:'spanning',name:'Spannendste moment',q:'Wanneer wil je het allerliefst weten hoe het afloopt?',h:.95},
+ {id:'oplossing',name:'Oplossing',q:'Hoe wordt het probleem opgelost? Wie of wat helpt?',h:.55},
+ {id:'einde',name:'Einde',q:'Hoe loopt het af? Weet je precies hoe het eindigt, of mag je het zelf bedenken?',h:.18},
+];
+const PH = id => PHASES.find(p=>p.id===id);
+const phColor = id => `var(--${id})`; const phTint = id => `var(--${id}-t)`;
+const PHHEX = {begin:'#564A9F',probleem:'#5F060D',spanning:'#5C2266',oplossing:'#095F6D',einde:'#1F2B5D'};
+const PHTINT = {begin:'#ECEBF6',probleem:'#FBE6E6',spanning:'#F4E7F1',oplossing:'#E1F3F6',einde:'#E6E9F3'};
+
+const TERMS = {
+ 'spanningsboog':'Hoe de spanning in een verhaal opbouwt naar het spannendste moment en daarna weer afneemt.',
+ 'spanning':'Het gevoel dat je wilt weten hoe het verder gaat. Ook humor kan je laten doorlezen.',
+ 'situatie':'Een moment in het verhaal: de beginsituatie, situaties die iets nieuws toevoegen, en de slotsituatie.',
+ 'handeling (plot, intrige)':'Wat er in het verhaal gebeurt en hoe de gebeurtenissen met elkaar te maken hebben.',
+ 'scène':'Een stukje van het verhaal dat zich op één plek en één moment afspeelt.',
+ 'chronologisch':'De gebeurtenissen worden verteld in de volgorde waarin ze gebeuren.',
+ 'onderbroken verhaal':'Het verhaal wordt onderbroken door een stuk over een ander moment of een andere plek.',
+ 'flashback':'Het verhaal gaat even terug naar iets wat eerder is gebeurd.',
+ 'flashforward':'Het verhaal laat even iets zien wat later gaat gebeuren.',
+ 'tijdsverloop':'Hoeveel tijd er in het verhaal voorbijgaat.',
+ 'tijdversnelling':'Een lange tijd wordt kort verteld, bijvoorbeeld: "Drie weken later..."',
+ 'tijdvertraging':'Een kort moment wordt heel uitgebreid verteld, vaak op een spannend moment.',
+ 'informatieve opening':'Het verhaal begint met uitleg over wie, waar en wanneer.',
+ 'opening-in-de-handeling':'Het verhaal begint midden in iets wat gebeurt.',
+ 'open einde':'Aan het eind weet je niet precies hoe het afloopt. Je mag het zelf bedenken.',
+ 'gesloten einde':'Aan het eind is duidelijk hoe het afloopt.',
+ 'hoofdfiguur':'Het personage om wie het verhaal draait.',
+ 'bijfiguur':'Een personage dat minder belangrijk is, bijvoorbeeld een helper of tegenspeler van de hoofdfiguur.',
+ 'karakter':'Een personage met verschillende kanten, dat in het verhaal kan veranderen.',
+ 'type':'Een personage met maar een paar duidelijke eigenschappen, zoals "de strenge juf".',
+ 'karikatuur':'Een personage waarvan één eigenschap heel overdreven is, vaak om te lachen.',
+ 'perspectief':'Door wiens ogen je het verhaal beleeft.',
+ 'vertelwijze (vertelperspectief)':'De manier waarop het verhaal verteld wordt: wie vertelt en wat die verteller weet.',
+ 'ik-verhaal':'Een personage vertelt het verhaal zelf, met "ik".',
+ 'personaal verhaal (hij/zij-verhaal)':'Er wordt verteld met "hij" of "zij", maar je beleeft alles door de ogen van één personage.',
+ 'auctoriaal verhaal':'Een verteller die alles weet, ook wat alle personages denken en voelen.',
+ 'ruimte':'Waar en wanneer het verhaal zich afspeelt.',
+ 'thema':'Waar het verhaal eigenlijk over gaat, de grondgedachte. Bijvoorbeeld vriendschap, of mens en natuur.',
+ 'motief':'Iets wat in het verhaal terugkomt en past bij het thema.',
+ 'leidmotief':'Een detail dat steeds terugkomt en daardoor belangrijk wordt.',
+ 'belangenruimte':'',
+};
+const GOAL_TERMS = {
+ pad:['spanningsboog','situatie','handeling (plot, intrige)','chronologisch','spanning','scène','tijdsverloop','gesloten einde','open einde','informatieve opening','opening-in-de-handeling','flashback','flashforward','onderbroken verhaal','tijdversnelling','tijdvertraging'],
+ kwartet:['hoofdfiguur','bijfiguur','karakter','type','karikatuur','perspectief','ik-verhaal','personaal verhaal (hij/zij-verhaal)','auctoriaal verhaal','vertelwijze (vertelperspectief)'],
+ memory:['handeling (plot, intrige)','situatie','spanning','hoofdfiguur','ruimte','thema','motief','leidmotief','open einde','gesloten einde'],
+};
+const ALL_TERMS = ['auctoriaal verhaal','belangenruimte','bijfiguur','chronologisch','flashback','flashforward','gesloten einde','handeling (plot, intrige)','hoofdfiguur','ik-verhaal','informatieve opening','karakter','karikatuur','leidmotief','motief','onderbroken verhaal','open einde','opening-in-de-handeling','personaal verhaal (hij/zij-verhaal)','perspectief','ruimte','scène','situatie','spanning','spanningsboog','thema','tijdsverloop','tijdversnelling','tijdvertraging','type','vertelwijze (vertelperspectief)'];
+const groupTerms = g => GOAL_TERMS[S.lesson.goal].slice(0, g.termCount);
+
+const CHECKS = {
+ pad:{items:['Elk deel van de verhaalberg heeft minstens één gebeurtenis.','De gebeurtenissen staan in de volgorde van het verhaal.','We hebben alleen gebeurtenissen gekozen die belangrijk zijn voor het verhaal.'],ask:'Waarom is dit het spannendste moment van het verhaal?'},
+ kwartet:{items:['We weten wie de hoofdpersoon is.','Bij elk personage hebben we alle vier de vragen ingevuld.','Bij elke bijfiguur weten we of het een helper of tegenspeler is, of iets anders.'],ask:'Waarom is de hoofdpersoon belangrijker dan de bijfiguren?'},
+ memory:{items:['Bij elk paar horen de twee kaarten echt bij elkaar.','Bij elk paar weten we of het een probleem en oplossing is, of een oorzaak en gevolg.','Op elke kaart staat maar één ding.'],ask:'Kies één paar. Hoe hebben de twee kaarten met elkaar te maken?'},
+};
+const TASKS = {
+ vertel:{name:'Vertel',def:'Vertel wat hier gebeurt en waarom het belangrijk is voor het verhaal.'},
+ hierna:{name:'Wat gebeurt hierna?',def:'Wat gebeurt er hierna in het verhaal? Vertel het in je eigen woorden.'},
+ kies:{name:'Kies',def:'Wat gebeurt er nu in het verhaal? Kies A of B en leg uit waarom.'},
+ obstakel:{name:'Obstakel',def:'Probleem! Leg uit wat er misgaat en hoe dat komt.'},
+};
+const DEF_TASK = {begin:'vertel',probleem:'obstakel',spanning:'kies',oplossing:'hierna',einde:'vertel'};
+const ROLES = {'':'Kies een rol','helper':'Helper','tegenspeler':'Tegenspeler','anders':'Anders'};
+const KW_Q = [
+ {k:'wie',t:'Wie is het?',q:'Hoe ziet het personage eruit en hoe is het van binnen?'},
+ {k:'wil',t:'Wat wil het?',q:'Wat wil dit personage graag, of waar is het bang voor?'},
+ {k:'doet',t:'Wat doet het?',q:'Wat doet het personage in het verhaal?'},
+ {k:'afloop',t:'Hoe loopt het af?',q:'Hoe loopt het verhaal af voor dit personage?'},
+];
+const PAIR_KIND = {po:{name:'Probleem en oplossing',a:'Probleem',b:'Oplossing',ca:'#5F060D',cb:'#095F6D'},og:{name:'Oorzaak en gevolg',a:'Oorzaak',b:'Gevolg',ca:'#564A9F',cb:'#1F58A8'}};
+const TEAMCOL = ['#ECE828','#5EC8D8','#F59395','#9DD08F'];
+const STEPS = [['analyse','Analyse'],['check','Checkvragen'],['controle','Controle'],['bouwen','Spel bouwen'],['spelen','Spelen']];
+const PAD_POINTS = null;
+
+/* ---------- Voorbeeldles (duidelijk als voorbeeld gemarkeerd) ---------- */
+const ev = (text, phase, icon) => ({id:uid('e'), text, phase, pic: icon?{type:'icon',id:icon}:null});
+const pers = (name, role, rol, wie, wil, doet, afloop, waarom, icon) => ({id:uid('p'), name, role, rol, wie, wil, doet, afloop, waarom, pic:icon?{type:'icon',id:icon}:null});
+const pair = (kind, a, b, why, ia, ib) => ({id:uid('m'), kind, a, b, why, picA: ia?{type:'icon',id:ia}:null, picB: ib?{type:'icon',id:ib}:null});
+function sampleEvents(){ return [
+ ev('Mees woont met opa in de vuurtoren aan zee.','begin','vuurtoren'),
+ ev('Opa leert Mees hoe de grote lamp werkt.','begin','idee'),
+ ev('Opa valt van de trap en moet naar het ziekenhuis.','probleem','gevaar'),
+ ev('Er komt een zware storm en de lamp gaat uit.','probleem','storm'),
+ ev('Mees klimt in het donker naar boven om de lamp te maken.','spanning','nacht'),
+ ev('Mees vindt opa\'s gereedschap en de lamp gaat weer aan.','oplossing','idee'),
+ ev('Het schip vaart veilig de haven in en opa is trots op Mees.','einde','reis'),
+];}
+function samplePers(){ return [
+ pers('Mees','hoofd','','Een jongen van 11 die bij opa woont. Hij is stil, maar slim.','Hij wil net zo goed voor de lamp zorgen als opa.','Hij klimt in de storm naar boven en maakt de lamp.','Hij is trots en opa ook.','Het hele verhaal gaat over wat Mees doet en durft.','jongen'),
+ pers('Opa','bij','helper','De vuurtorenwachter. Oud, rustig en streng.','Hij wil dat de lamp altijd brandt.','Hij leert Mees hoe de lamp werkt.','Hij komt uit het ziekenhuis en ziet dat Mees het gered heeft.','Hij helpt Mees, maar is het grootste deel van het verhaal weg.','oudere'),
+ pers('Kapitein Bos','bij','anders','Kapitein van het vrachtschip.','Hij wil veilig de haven in varen.','Hij zoekt in de storm naar het licht.','Hij vaart veilig binnen.','Hij komt maar kort voor in het verhaal.','reis'),
+];}
+function samplePairs(){ return [
+ pair('po','De lamp gaat uit in de storm.','Mees maakt de lamp met opa\'s gereedschap.','Door de lamp te maken lost Mees het grootste probleem op.','storm','idee'),
+ pair('og','Opa valt van de trap.','Mees is alleen in de vuurtoren.','Omdat opa naar het ziekenhuis moet, staat Mees er alleen voor.','gevaar','vuurtoren'),
+ pair('og','Er is geen licht op zee.','Het schip kan de haven niet vinden.','Zonder het licht van de vuurtoren ziet de kapitein niet waar hij heen moet.','nacht','reis'),
+ pair('po','Mees durft niet in het donker.','Hij neemt de zaklamp van opa mee.','Met de zaklamp kan hij toch naar boven.','geheim','idee'),
+];}
+function emptyWork(){ return {step:'analyse',approval:null,note:'',analysis:{events:[],pers:[],pairs:[]},checks:{items:{},text:'',terms:{}},game:null,play:null}; }
+function newGroup(name, termCount=4, needsCheck=true){ return {id:uid('g'),name,termCount,needsCheck,w:{pad:emptyWork(),kwartet:emptyWork(),memory:emptyWork()}}; }
+
+let S = {view:'setup', lesson:{title:'De vuurtoren van Mees (voorbeeldverhaal)',goal:'pad',mode:'scherm',paperImages:'tekenen',code:'1234',started:false}, groups:[], active:null, sel:null, ui:{openTerm:null,codeIn:'',codeErr:'',confirmReset:false}};
+(function seed(){
+ const g1=newGroup('Groepje 1',4,true), g2=newGroup('Groepje 2',3,true), g3=newGroup('Groepje 3',6,false);
+ g1.w.pad.analysis.events=sampleEvents().slice(0,5);
+ g1.w.kwartet.analysis.pers=samplePers(); g1.w.memory.analysis.pairs=samplePairs();
+ g2.w.pad.analysis.events=sampleEvents(); g2.w.pad.step='controle'; g2.w.pad.approval='wacht';
+ CHECKS.pad.items.forEach((_,i)=>g2.w.pad.checks.items[i]=true); g2.w.pad.checks.text='Mees is alleen en het is donker. Je weet niet of hij de lamp kan maken voordat het schip er is.';
+ g3.w.pad.analysis.events=sampleEvents(); g3.w.pad.step='bouwen'; g3.w.pad.approval='akkoord';
+ CHECKS.pad.items.forEach((_,i)=>g3.w.pad.checks.items[i]=true); g3.w.pad.checks.text='Het is nacht en storm, en het schip komt eraan.';
+ g3.w.pad.game=buildPadGame(g3.w.pad.analysis.events);
+ S.groups=[g1,g2,g3]; S.lesson.started=true;
+})();
+
+const G = () => S.groups.find(g=>g.id===S.active);
+const W = g => (g||G()).w[S.lesson.goal];
+
+/* ---------- Spellen opbouwen uit analyse (kopie: aanpassen van spelkaarten verandert de analyse niet) ---------- */
+function orderedEvents(evs){ return PHASES.flatMap(p=>evs.filter(e=>e.phase===p.id)); }
+function buildPadGame(evs){
+ const list = orderedEvents(evs);
+ return {gap:1, vakken:list.map(e=>({id:uid('v'),fromId:e.id,phase:e.phase,event:e.text,pic:e.pic?{...e.pic}:null,task:DEF_TASK[e.phase],text:TASKS[DEF_TASK[e.phase]].def,a:'',b:'',back:2}))};
+}
+function buildKwGame(ps){
+ return {sets:ps.map(p=>({id:uid('k'),fromId:p.id,name:p.name||'Naamloos',role:p.role,pic:p.pic?{...p.pic}:null,cards:KW_Q.map(q=>({k:q.k,t:q.t,text:p[q.k]||''}))}))};
+}
+function buildMemGame(pairs){
+ return {pairs:pairs.map(p=>({id:uid('mp'),fromId:p.id,kind:p.kind,a:p.a,b:p.b,picA:p.picA?{...p.picA}:null,picB:p.picB?{...p.picB}:null}))};
+}
+function buildGame(goal, an){ return goal==='pad'?buildPadGame(an.events):goal==='kwartet'?buildKwGame(an.pers):buildMemGame(an.pairs); }
+
+/* ---------- Validatie per stap ---------- */
+function analysisStatus(goal, an){
+ if(goal==='pad'){
+  const empty = PHASES.filter(p=>!an.events.some(e=>e.phase===p.id && e.text.trim()));
+  return {ok:!empty.length, msg: empty.length?`Nog leeg: ${empty.map(p=>p.name).join(', ')}.`:`${an.events.length} gebeurtenissen op de verhaalberg.`};
+ }
+ if(goal==='kwartet'){
+  const full = an.pers.filter(p=>p.name.trim() && KW_Q.every(q=>(p[q.k]||'').trim()));
+  const hoofd = an.pers.some(p=>p.role==='hoofd');
+  const ok = hoofd && an.pers.length>=3 && full.length===an.pers.length;
+  const parts=[]; if(!hoofd) parts.push('kies de hoofdfiguur'); if(an.pers.length<3) parts.push(`voeg nog ${3-an.pers.length} personage${3-an.pers.length>1?'s':''} toe`); if(full.length<an.pers.length) parts.push('vul bij elk personage de naam en alle vier de vragen in');
+  return {ok, msg: ok?`${an.pers.length} personages, dus ${an.pers.length} kwartetten.`:`Nog te doen: ${parts.join(', ')}.`};
+ }
+ const full = an.pairs.filter(p=>p.a.trim()&&p.b.trim()&&p.why.trim());
+ const ok = an.pairs.length>=4 && full.length===an.pairs.length;
+ const parts=[]; if(an.pairs.length<4) parts.push(`maak nog ${4-an.pairs.length} paar`); if(full.length<an.pairs.length) parts.push('vul bij elk paar beide kaarten en de uitleg in');
+ return {ok, msg: ok?`${an.pairs.length} paren, dus ${an.pairs.length*2} memorykaarten.`:`Nog te doen: ${parts.join(', ')}.`};
+}
+function checkStatus(g){
+ const w=W(g), c=CHECKS[S.lesson.goal];
+ const all = c.items.every((_,i)=>w.checks.items[i]) && groupTerms(g).every(t=>w.checks.terms[t]) && w.checks.text.trim().length>0;
+ return all;
+}
+function canReach(g, step){
+ const w=W(g);
+ if(step==='analyse') return true;
+ if(step==='check') return analysisStatus(S.lesson.goal,w.analysis).ok;
+ if(step==='controle') return canReach(g,'check') && checkStatus(g);
+ if(step==='bouwen') return canReach(g,'controle') && (!g.needsCheck || w.approval==='akkoord');
+ if(step==='spelen') return canReach(g,'bouwen') && !!w.game;
+}
+
+/* ---------- Render ---------- */
+function render(){
+ const fid = document.activeElement && document.activeElement.id;
+ $('#app').innerHTML = header() + `<main id="main">${S.view==='setup'?vSetup():S.view==='volgen'?vVolgen():S.view==='leerlingen'?vLeerlingen():vUitleg()}</main>`;
+ if(fid){ const el=document.getElementById(fid); if(el) el.focus(); }
+ afterRender();
+}
+function header(){
+ const nav=[['setup','Les instellen'],['volgen','Lesoverzicht'],['leerlingen','Leerlingen'],['uitleg','Uitleg voor leerkrachten']];
+ return `<header class="top"><div class="top-in"><div class="brand">${LOGO()}<span>Verhaalbouwers</span></div>
+ <span class="storyline">${S.lesson.started?esc(S.lesson.title)+' · '+GOALS[S.lesson.goal].game:''}</span>
+ <nav class="nav" aria-label="Onderdelen">${nav.map(([k,l])=>`<button id="nav-${k}" data-a="nav" data-v="${k}" ${S.view===k?'aria-current="page"':''}>${l}</button>`).join('')}</nav></div></header>`;
+}
+
+/* Les instellen */
+function vSetup(){
+ const L=S.lesson, goal=GOALS[L.goal];
+ return `<div class="head"><div class="stack" style="gap:6px"><span class="kicker">Leerkracht</span><h1>Les instellen</h1></div><p>Kies het leerdoel dat past bij het verhaal dat je hebt voorgelezen. Het spel hoort vast bij het leerdoel.</p></div>
+ <div class="setup">
+  <div class="stack" style="gap:24px">
+   <section class="panel" aria-labelledby="s1"><div class="block-h"><span class="sq" aria-hidden="true">1</span><h2 id="s1" style="font-size:1.2rem">Verhaal</h2></div>
+    <div class="field"><label for="in-title">Titel van het voorgelezen verhaal</label><input type="text" id="in-title" data-in="title" value="${esc(L.title)}"></div></section>
+   <section class="panel" aria-labelledby="s2"><div class="block-h"><span class="sq" aria-hidden="true">2</span><h2 id="s2" style="font-size:1.2rem">Leerdoel en spel</h2></div>
+    <div class="grid3">${Object.entries(GOALS).map(([k,g])=>`<button class="goal" id="goal-${k}" data-a="goal" data-v="${k}" aria-pressed="${L.goal===k}"><span class="ill">${ILL[k]}</span><h3>${g.name}</h3><span class="game">Spel: <strong>${g.game}</strong> (${g.kind})</span><span class="fits">${g.fits}</span></button>`).join('')}</div>
+    <p class="note"><strong>${goal.game}:</strong> ${goal.does}</p></section>
+   <section class="panel" aria-labelledby="s4"><div class="block-h"><span class="sq" aria-hidden="true">4</span><h2 id="s4" style="font-size:1.2rem">Groepjes</h2></div>
+    <p class="hint">De app kiest begrippen die bij het leerdoel passen. Stel per groepje in hoeveel begrippen het moet verwerken, en of je de analyse eerst wilt controleren.</p>
+    <div class="stack">${S.groups.map(g=>`<div class="grp">
+      <div class="field"><label for="gn-${g.id}">Naam</label><input type="text" id="gn-${g.id}" data-in="gname" data-g="${g.id}" value="${esc(g.name)}"></div>
+      <div class="field"><span class="lbl" id="gt-${g.id}">Begrippen</span><div class="stepper" role="group" aria-labelledby="gt-${g.id}"><button class="ibtn" id="tm-${g.id}" data-a="terms" data-g="${g.id}" data-d="-1" aria-label="Minder begrippen voor ${esc(g.name)}" ${g.termCount<=0?'disabled':''}>${ICO.minus}</button><output aria-live="polite">${g.termCount}</output><button class="ibtn" id="tp-${g.id}" data-a="terms" data-g="${g.id}" data-d="1" aria-label="Meer begrippen voor ${esc(g.name)}" ${g.termCount>=GOAL_TERMS[L.goal].length?'disabled':''}>${ICO.plus}</button></div></div>
+      <label class="chk" for="nc-${g.id}"><input type="checkbox" id="nc-${g.id}" data-ch="needs" data-g="${g.id}" ${g.needsCheck?'checked':''}><span>Controle door mij nodig</span></label>
+      <button class="btn btn-s" id="gdel-${g.id}" data-a="gdel" data-g="${g.id}" aria-label="Verwijder ${esc(g.name)}">Verwijderen</button>
+      <div class="chips" style="grid-column:1/-1" aria-label="Begrippen voor ${esc(g.name)}">${groupTerms(g).map(t=>`<span class="chip">${esc(t)}</span>`).join('')||'<span class="hint">Geen begrippen</span>'}</div>
+     </div>`).join('')}</div>
+    <div><button class="btn" id="gadd" data-a="gadd">${ICO.plus} Groepje toevoegen</button></div></section>
+  </div>
+  <aside class="stack" style="gap:24px">
+   <section class="panel strong" aria-labelledby="s3"><div class="block-h"><span class="sq" aria-hidden="true">3</span><h2 id="s3" style="font-size:1.2rem">Werkvorm</h2></div>
+    <div class="field"><span class="lbl" id="wv">Leerlingen werken</span><div class="seg" role="group" aria-labelledby="wv"><button id="m-scherm" data-a="mode" data-v="scherm" aria-pressed="${L.mode==='scherm'}">Op scherm</button><button id="m-papier" data-a="mode" data-v="papier" aria-pressed="${L.mode==='papier'}">Op papier</button></div></div>
+    ${L.mode==='papier'?`<div class="field"><span class="lbl" id="bl">Beelden op de kaarten</span><div class="seg" role="group" aria-labelledby="bl"><button id="i-tekenen" data-a="pimg" data-v="tekenen" aria-pressed="${L.paperImages==='tekenen'}">Zelf tekenen</button><button id="i-afb" data-a="pimg" data-v="afbeeldingen" aria-pressed="${L.paperImages==='afbeeldingen'}">Met afbeeldingen</button></div><span class="hint">${L.paperImages==='tekenen'?'Op de kaarten staan lege kaders om in te tekenen.':'Er komt een vel met pictogrammen bij om uit te knippen.'}</span></div>`
+     :`<p class="hint">Op scherm kiezen leerlingen een pictogram of tekenen ze zelf.</p>`}
+    ${L.mode==='scherm'?`<div class="field"><label for="in-code">Leerkrachtcode</label><input type="text" id="in-code" data-in="code" value="${esc(L.code)}" inputmode="numeric" autocomplete="off"><span class="hint">Hiermee geef je op het scherm van een groepje akkoord na de controle.</span></div>`:''}
+   </section>
+   <section class="panel" aria-labelledby="sv"><h2 id="sv" style="font-size:1.2rem">Zo verloopt de les</h2>
+    <ol class="flow"><li>Analyse van het verhaal</li><li>Checkvragen</li><li>Controlemoment met jou</li><li>Spel bouwen uit de analyse</li><li>Een ander groepje speelt en stelt vragen</li></ol>
+    <p class="hint">Vertel vooraf dat leerlingen tijdens het spelen gebeurtenissen en verbanden uit het verhaal moeten onthouden. Bij twijfel mogen ze het verhaal raadplegen.</p>
+    <button class="btn btn-p" id="start" data-a="start">${L.mode==='scherm'?'Les starten':'Naar het downloadpakket'}</button>
+   </section>
+  </aside>
+ </div>`;
+}
+
+/* Lesoverzicht */
+function vVolgen(){
+ const L=S.lesson;
+ if(L.mode==='papier') return vPaper();
+ return `<div class="head"><div class="stack" style="gap:6px"><span class="kicker">Leerkracht · ${esc(L.title)}</span><h1>Lesoverzicht</h1></div><p>Hier zie je waar elk groepje is. Groepjes die op controle wachten, kun je hier akkoord geven of laten aanpassen.</p></div>
+ <section class="panel" aria-labelledby="ov"><h2 id="ov" class="sr">Groepjes</h2><div class="tbl"><table><thead><tr><th scope="col">Groepje</th><th scope="col">Stap</th><th scope="col">Analyse</th><th scope="col">Controle</th><th scope="col"><span class="sr">Acties</span></th></tr></thead><tbody>
+ ${S.groups.map(g=>{const w=W(g), st=analysisStatus(L.goal,w.analysis);
+  return `<tr><th scope="row">${esc(g.name)}<div class="hint" style="font-weight:400">${g.termCount} begrippen</div></th><td>${STEPS.find(s=>s[0]===w.step)[1]}</td><td class="hint">${esc(st.msg)}</td>
+  <td>${!g.needsCheck?'<span class="status neutral">Niet nodig</span>':w.approval==='akkoord'?'<span class="status ok">Akkoord</span>':w.approval==='wacht'?'<span class="status wacht">Wacht op jou</span>':w.approval==='aanpassen'?'<span class="status neutral">Past aan</span>':'<span class="hint">Nog niet</span>'}
+   ${g.needsCheck&&w.approval==='wacht'?`<div class="stack" style="margin-top:10px;gap:8px"><div class="field"><label for="tn-${g.id}" class="hint">Bijsturing (optioneel)</label><input type="text" id="tn-${g.id}" data-in="tnote" data-g="${g.id}" value="${esc(w.note)}"></div><div class="row"><button class="btn btn-p btn-s" id="ok-${g.id}" data-a="approve" data-g="${g.id}">Akkoord</button><button class="btn btn-s" id="no-${g.id}" data-a="reject" data-g="${g.id}">Nog aanpassen</button></div></div>`:''}</td>
+  <td><button class="btn btn-s" id="open-${g.id}" data-a="opengroup" data-g="${g.id}">Werk bekijken</button></td></tr>`;}).join('')}
+ </tbody></table></div></section>
+ <p class="hint">Deze eerste versie werkt op één apparaat: alles wat groepjes doen, blijft alleen in dit venster bewaard zolang het open is.</p>`;
+}
+
+/* Papier: downloadpakket */
+const PAPER_SHEETS = {pad:['Analysewerkblad: de verhaalberg','Checkblad','Speelbord','Blanco spelkaarten','Spelregelkaart','Begrippenkaart'],kwartet:['Analysewerkblad: personages','Checkblad','Blanco kwartetkaarten','Spelregelkaart','Begrippenkaart'],memory:['Analysewerkblad: paren','Checkblad','Blanco memorykaarten','Spelregelkaart','Begrippenkaart']};
+function vPaper(){
+ const L=S.lesson, pages=paperPages(L.goal,L.paperImages), names=[...PAPER_SHEETS[L.goal]];
+ if(L.paperImages==='afbeeldingen') names.splice(names.length-1,0,'Pictogrammenvel');
+ return `<div class="head"><div class="stack" style="gap:6px"><span class="kicker">Leerkracht · ${esc(L.title)}</span><h1>Downloadpakket ${GOALS[L.goal].game}</h1></div><p>Print het pakket voor elk groepje. ${L.paperImages==='tekenen'?'Op de kaarten staan lege kaders om in te tekenen.':'Er zit een vel met pictogrammen bij om uit te knippen en op te plakken.'}</p></div>
+ <section class="panel" aria-labelledby="pk"><div class="head"><h2 id="pk" style="font-size:1.2rem">${pages.length} pagina's, A4</h2><div class="row"><button class="btn btn-p" id="dl-paper" data-a="dlpaper">Afdrukken of opslaan als PDF</button><span class="hint" id="dl-msg"></span></div></div>
+  <div class="sheets" tabindex="0" aria-label="Voorbeeld van de pagina's">${pages.map((p,i)=>`<div class="sheetwrap"><span class="cap2">${i+1}. ${esc(names[i]||'')}</span><div class="sheetbox" aria-hidden="true">${p}</div></div>`).join('')}</div></section>
+ <section class="panel" aria-labelledby="pc"><h2 id="pc" style="font-size:1.2rem">Begrippen per groepje</h2><p class="hint">Schrijf deze begrippen op het checkblad van het groepje. De uitleg staat op de begrippenkaart.</p>
+  <div class="stack">${S.groups.map(g=>`<div class="row" style="align-items:flex-start"><strong style="min-width:110px">${esc(g.name)}</strong><div class="chips">${groupTerms(g).map(t=>`<span class="chip">${esc(t)}</span>`).join('')||'<span class="hint">Geen begrippen</span>'}</div><span class="hint ml">${g.needsCheck?'Controle nodig':'Controle niet nodig'}</span></div>`).join('')}</div></section>`;
+}
+
+/* Leerlingen */
+function vLeerlingen(){
+ if(S.lesson.mode==='papier') return `<div class="panel strong"><h1>Deze les is op papier</h1><p>De leerlingen werken met de werkbladen uit het downloadpakket.</p><div><button class="btn btn-p" data-a="nav" data-v="volgen" id="to-paper">Naar het downloadpakket</button></div></div>`;
+ const g=G();
+ if(!g) return `<div class="head"><div class="stack" style="gap:6px"><span class="kicker">Leerlingen · ${esc(S.lesson.title)}</span><h1>Kies jullie groepje</h1></div><p>Jullie gaan een spel maken over het verhaal: <strong>${GOALS[S.lesson.goal].game}</strong>. Eerst onderzoeken jullie het verhaal.</p></div>
+ <div class="tiles">${S.groups.map(gr=>{const w=W(gr); return `<button class="tile" id="tile-${gr.id}" data-a="opengroup" data-g="${gr.id}"><span class="nm">${esc(gr.name)}</span><span class="hint">Stap: ${STEPS.find(s=>s[0]===w.step)[1]}</span>${ILL[S.lesson.goal]}</button>`;}).join('')}</div>`;
+ const w=W(g);
+ const idx=STEPS.findIndex(s=>s[0]===w.step);
+ return `<div class="head"><div class="stack" style="gap:6px"><span class="kicker">${esc(g.name)} · ${GOALS[S.lesson.goal].game}</span><h1>${esc(S.lesson.title)}</h1></div><button class="btn btn-s" id="back-groups" data-a="closegroup">Ander groepje</button></div>
+ <nav aria-label="Stappen"><ul class="steps">${STEPS.map(([k,l],i)=>{const can=canReach(g,k);return `<li class="${i<idx?'done':''}"><button id="st-${k}" data-a="step" data-v="${k}" ${w.step===k?'aria-current="step"':''} ${can?'':'disabled'}><span class="n" aria-hidden="true">${i<idx?'✓':i+1}</span>${l}${i<idx?'<span class="sr"> (klaar)</span>':''}</button></li>`;}).join('')}</ul></nav>
+ ${w.step==='analyse'?vAnalyse(g):w.step==='check'?vCheck(g):w.step==='controle'?vControle(g):w.step==='bouwen'?vBouwen(g):vSpelen(g)}`;
+}
+
+function termsPanel(g){
+ const ts=groupTerms(g); if(!ts.length) return '';
+ return `<section class="panel" aria-labelledby="tp"><h2 id="tp" style="font-size:1.1rem">Jullie begrippen</h2><p class="hint">Gebruik deze begrippen in jullie analyse of in het spel. Klik op een begrip voor uitleg.</p>
+ <div class="chips">${ts.map((t,i)=>`<button class="chip" id="term-${i}" data-a="term" data-v="${esc(t)}" aria-expanded="${S.ui.openTerm===t}" aria-controls="tx">${esc(t)}</button>`).join('')}</div>
+ ${S.ui.openTerm&&ts.includes(S.ui.openTerm)?`<p class="term-x" id="tx"><strong>${esc(S.ui.openTerm)}:</strong> ${esc(TERMS[S.ui.openTerm])}</p>`:'<span id="tx"></span>'}</section>`;
+}
+function nextBar(g, label, step){
+ const st=analysisStatus(S.lesson.goal,W(g).analysis);
+ return `<div class="panel strong" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap"><p role="status"><strong>${st.ok?'Klaar om te checken.':'Nog niet klaar.'}</strong> ${esc(st.msg)}</p><button class="btn btn-p" id="next-${step}" data-a="step" data-v="${step}" ${st.ok?'':'disabled'}>${label}</button></div>`;
+}
+
+/* Analyse */
+function vAnalyse(g){
+ const w=W(g), goal=S.lesson.goal;
+ const note = w.approval==='aanpassen'?`<p class="note" role="status"><strong>De leerkracht vraagt jullie iets aan te passen.</strong> ${esc(w.note||'')}</p>`:'';
+ if(goal==='pad') return note+vAnaPad(g)+nextBar(g,'Naar de checkvragen','check');
+ if(goal==='kwartet') return note+vAnaKw(g)+nextBar(g,'Naar de checkvragen','check');
+ return note+vAnaMem(g)+nextBar(g,'Naar de checkvragen','check');
+}
+function vAnaPad(g){
+ const evs=W(g).analysis.events, ord=orderedEvents(evs);
+ const pad=[96,48,0,48,96];
+ return `<div class="work"><div class="side">
+  <section class="panel strong" aria-labelledby="ne"><h2 id="ne" style="font-size:1.1rem">Nieuwe gebeurtenis</h2>
+   <div class="field"><label for="ne-text">Wat gebeurt er?</label><textarea id="ne-text" data-in="netext">${esc(S.ui.neText||'')}</textarea></div>
+   <div class="field"><label for="ne-phase">Bij welk deel van het verhaal hoort het?</label><select id="ne-phase" data-ch="nephase">${PHASES.map(p=>`<option value="${p.id}" ${(S.ui.nePhase||'begin')===p.id?'selected':''}>${p.name}</option>`).join('')}</select></div>
+   <button class="btn btn-p" id="ne-add" data-a="evadd">Op de verhaalberg zetten</button>
+   <p class="hint">Kies zelf hoeveel gebeurtenissen je opschrijft. Neem alleen op wat belangrijk is voor het verhaal.</p></section>
+  ${termsPanel(g)}
+ </div>
+ <section aria-labelledby="vb" class="stack"><div class="head"><h2 id="vb">De verhaalberg</h2><p class="hint">Sleep een kaart naar een ander deel, of kies het deel onder de kaart. Met de pijlen zet je een kaart eerder of later.</p></div>
+  <div class="berg">${PHASES.map((p,pi)=>{const list=evs.filter(e=>e.phase===p.id);return `<div class="col" data-drop="${p.id}"><div class="spacer" style="height:${pad[pi]}px"></div>
+   <div class="cap" style="background:${phColor(p.id)}"><b>${p.name}</b><span>${p.q}</span></div>
+   <div class="well" style="background:${phTint(p.id)}">${list.map(e=>{const n=ord.indexOf(e)+1,li=list.indexOf(e);return `<article class="ev" draggable="true" data-drag="${e.id}" aria-label="Gebeurtenis ${n}">
+     <div class="evtop"><span class="num" style="background:${phColor(p.id)}">${n}</span>
+     <button class="picbtn ${e.pic?'has':''}" id="pic-${e.id}" data-a="pic" data-t="ev" data-id="${e.id}" aria-label="${e.pic?'Beeld wijzigen':'Beeld kiezen'} voor gebeurtenis ${n}">${e.pic?picHTML(e.pic,''):ICO.image}</button>
+     <span class="ml"></span>
+     <button class="ibtn" id="del-${e.id}" data-a="evdel" data-id="${e.id}" aria-label="Gebeurtenis ${n} verwijderen">${ICO.trash}</button></div>
+     <label class="sr" for="et-${e.id}">Tekst van gebeurtenis ${n}</label><textarea id="et-${e.id}" data-in="evtext" data-id="${e.id}">${esc(e.text)}</textarea>
+     <div class="evbot"><label class="sr" for="ep-${e.id}">Deel van het verhaal voor gebeurtenis ${n}</label><select id="ep-${e.id}" data-ch="evphase" data-id="${e.id}">${PHASES.map(x=>`<option value="${x.id}" ${x.id===e.phase?'selected':''}>${x.name}</option>`).join('')}</select>
+     <button class="ibtn" id="up-${e.id}" data-a="evmove" data-id="${e.id}" data-d="-1" aria-label="Gebeurtenis ${n} eerder" ${li===0?'disabled':''}>${ICO.up}</button>
+     <button class="ibtn" id="dn-${e.id}" data-a="evmove" data-id="${e.id}" data-d="1" aria-label="Gebeurtenis ${n} later" ${li===list.length-1?'disabled':''}>${ICO.down}</button></div>
+    </article>`;}).join('')||`<p class="empty">Nog geen gebeurtenis</p>`}</div></div>`;}).join('')}</div>
+ </section></div>`;
+}
+function vAnaKw(g){
+ const ps=W(g).analysis.pers;
+ return `<div class="work"><div class="side">
+  <section class="panel strong"><h2 style="font-size:1.1rem">Hulpvragen</h2><ul class="flow" style="padding:0;margin:0"><li>Om wie draait het verhaal? Dat is de hoofdfiguur.</li><li>Wie helpt de hoofdfiguur? Wie werkt hem of haar tegen?</li><li>Welke personages zijn belangrijk genoeg voor een eigen kwartet?</li></ul>
+  <p class="hint">Een kwartet van de hoofdfiguur is 3 punten waard, van een bijfiguur 1 punt.</p></section>
+  ${termsPanel(g)}</div>
+ <section class="stack" aria-labelledby="pp"><div class="head"><h2 id="pp">Personages</h2><button class="btn" id="padd" data-a="padd">${ICO.plus} Personage toevoegen</button></div>
+  <div class="grid2">${ps.map((p,i)=>`<article class="pers" aria-labelledby="pn-${p.id}">
+   <div class="ph" style="background:${p.role==='hoofd'?'var(--spanning)':'#7A3D7E'}"><button class="picbtn ${p.pic?'has':''}" style="background:#fff" id="pic-${p.id}" data-a="pic" data-t="pers" data-id="${p.id}" aria-label="${p.pic?'Beeld wijzigen':'Beeld kiezen'} voor personage ${i+1}">${p.pic?picHTML(p.pic,''):ICO.image}</button>
+    <label class="sr" for="pn-${p.id}">Naam van personage ${i+1}</label><input type="text" id="pn-${p.id}" data-in="pfield" data-f="name" data-id="${p.id}" value="${esc(p.name)}" placeholder="Naam">
+    <button class="ibtn" id="pdel-${p.id}" data-a="pdel" data-id="${p.id}" aria-label="Personage ${i+1} verwijderen">${ICO.trash}</button></div>
+   <div class="pb">
+    <fieldset style="border:0;padding:0;margin:0" class="stack" ><legend class="lbl" style="margin-bottom:6px">Hoe belangrijk?</legend><div class="row"><div class="radios"><label><input type="radio" name="role-${p.id}" id="r1-${p.id}" data-ch="prole" data-id="${p.id}" value="hoofd" ${p.role==='hoofd'?'checked':''}>Hoofdfiguur</label><label><input type="radio" name="role-${p.id}" id="r2-${p.id}" data-ch="prole" data-id="${p.id}" value="bij" ${p.role==='bij'?'checked':''}>Bijfiguur</label></div>
+     ${p.role==='bij'?`<label class="sr" for="prol-${p.id}">Rol van de bijfiguur</label><select id="prol-${p.id}" data-ch="prol" data-id="${p.id}" style="width:auto">${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${p.rol===k?'selected':''}>${v}</option>`).join('')}</select>`:''}</div></fieldset>
+    ${KW_Q.map(q=>`<div class="field"><label for="pq-${q.k}-${p.id}">${q.t} <span class="hint" style="font-weight:400">${q.q}</span></label><textarea id="pq-${q.k}-${p.id}" data-in="pfield" data-f="${q.k}" data-id="${p.id}" style="min-height:56px">${esc(p[q.k])}</textarea></div>`).join('')}
+    <div class="field"><label for="pw-${p.id}">Waarom is dit personage ${p.role==='hoofd'?'het belangrijkst':'minder belangrijk'}?</label><textarea id="pw-${p.id}" data-in="pfield" data-f="waarom" data-id="${p.id}" style="min-height:56px">${esc(p.waarom)}</textarea></div>
+   </div></article>`).join('')||'<p class="empty">Nog geen personages. Voeg er een toe.</p>'}</div></section></div>`;
+}
+function vAnaMem(g){
+ const ps=W(g).analysis.pairs;
+ return `<div class="work"><div class="side">
+  <section class="panel strong"><h2 style="font-size:1.1rem">Hulpvragen</h2><ul class="flow" style="padding:0;margin:0"><li>Wat is het probleem in het verhaal? Hoe wordt het opgelost?</li><li>Wat gebeurt er doordat iets anders gebeurt? Dat is oorzaak en gevolg.</li><li>Kun je bij elk paar uitleggen hoe de kaarten bij elkaar horen?</li></ul></section>
+  ${termsPanel(g)}</div>
+ <section class="stack" aria-labelledby="mp"><div class="head"><h2 id="mp">Paren</h2><button class="btn" id="madd" data-a="madd">${ICO.plus} Paar toevoegen</button></div>
+  ${ps.map((p,i)=>{const K=PAIR_KIND[p.kind];return `<article class="pair" aria-label="Paar ${i+1}">
+   <div class="pt"><strong>Paar ${i+1}</strong><label class="sr" for="mk-${p.id}">Soort verband van paar ${i+1}</label><select id="mk-${p.id}" data-ch="mkind" data-id="${p.id}" style="width:auto">${Object.entries(PAIR_KIND).map(([k,v])=>`<option value="${k}" ${p.kind===k?'selected':''}>${v.name}</option>`).join('')}</select><button class="ibtn ml" id="mdel-${p.id}" data-a="mdel" data-id="${p.id}" aria-label="Paar ${i+1} verwijderen">${ICO.trash}</button></div>
+   <div class="side-a" style="background:#fff"><div class="row"><span class="status" style="color:${K.ca}">${K.a}</span><button class="picbtn ${p.picA?'has':''}" id="pic-${p.id}-a" data-a="pic" data-t="pairA" data-id="${p.id}" aria-label="Beeld voor ${K.a.toLowerCase()} van paar ${i+1}">${p.picA?picHTML(p.picA,''):ICO.image}</button></div><label class="sr" for="ma-${p.id}">${K.a} van paar ${i+1}</label><textarea id="ma-${p.id}" data-in="mfield" data-f="a" data-id="${p.id}">${esc(p.a)}</textarea></div>
+   <div class="link" aria-hidden="true"><svg viewBox="0 0 48 48" width="44" height="44">${H(22,24,16,'l',K.ca)+H(26,24,16,'r',K.cb)}</svg></div>
+   <div class="side-b"><div class="row"><span class="status" style="color:${K.cb}">${K.b}</span><button class="picbtn ${p.picB?'has':''}" id="pic-${p.id}-b" data-a="pic" data-t="pairB" data-id="${p.id}" aria-label="Beeld voor ${K.b.toLowerCase()} van paar ${i+1}">${p.picB?picHTML(p.picB,''):ICO.image}</button></div><label class="sr" for="mb-${p.id}">${K.b} van paar ${i+1}</label><textarea id="mb-${p.id}" data-in="mfield" data-f="b" data-id="${p.id}">${esc(p.b)}</textarea></div>
+   <div class="why"><label for="mw-${p.id}" class="lbl">Hoe horen ze bij elkaar?</label><textarea id="mw-${p.id}" data-in="mfield" data-f="why" data-id="${p.id}" style="min-height:56px">${esc(p.why)}</textarea></div>
+  </article>`;}).join('')||'<p class="empty">Nog geen paren. Maak er minstens vier.</p>'}
+ </section></div>`;
+}
+
+/* Checkvragen */
+function vCheck(g){
+ const w=W(g), c=CHECKS[S.lesson.goal], ts=groupTerms(g), ok=checkStatus(g);
+ return `<div class="grid2"><section class="panel strong" aria-labelledby="cq"><h2 id="cq">Checkvragen</h2><p class="hint">Bespreek elke vraag in jullie groepje. Klopt iets nog niet? Ga terug naar de analyse en pas het aan.</p>
+  <fieldset style="border:0;padding:0;margin:0" class="stack" ><legend class="sr">Controleer jullie analyse</legend>
+  ${c.items.map((t,i)=>`<label class="chk" for="ck-${i}"><input type="checkbox" id="ck-${i}" data-ch="ck" data-v="${i}" ${w.checks.items[i]?'checked':''}><span>${t}</span></label>`).join('')}
+  ${ts.map((t,i)=>`<label class="chk" for="ckt-${i}"><input type="checkbox" id="ckt-${i}" data-ch="ckt" data-v="${esc(t)}" ${w.checks.terms[t]?'checked':''}><span>We hebben het begrip <strong>${esc(t)}</strong> gebruikt in onze analyse.</span></label>`).join('')}
+  </fieldset>
+  <div class="field"><label for="ck-text">${c.ask}</label><textarea id="ck-text" data-in="cktext">${esc(w.checks.text)}</textarea></div>
+  <div class="row"><button class="btn" id="ck-back" data-a="step" data-v="analyse">Terug naar de analyse</button><button class="btn btn-p" id="ck-next" data-a="tocontrole" ${ok?'':'disabled'}>Klaar voor de controle</button></div>
+  <p class="hint" id="ck-st" role="status">${ok?'Alles is afgevinkt en ingevuld.':'Vink alles af en beantwoord de vraag om verder te gaan.'}</p>
+ </section>${termsPanel(g)}</div>`;
+}
+
+/* Controle */
+function vControle(g){
+ const w=W(g);
+ if(!g.needsCheck) return `<section class="panel strong" aria-labelledby="ct"><h2 id="ct">Controle niet nodig</h2><p>De leerkracht heeft aangegeven dat jullie zonder controle verder mogen.</p><div class="row"><button class="btn" id="ct-back" data-a="step" data-v="analyse">Analyse nog aanpassen</button><button class="btn btn-p" id="ct-go" data-a="tobouwen">Spel bouwen</button></div></section>`;
+ if(w.approval==='akkoord') return `<section class="panel strong" aria-labelledby="ct"><h2 id="ct">Akkoord van de leerkracht</h2><p><span class="status ok">Akkoord</span> ${esc(w.note||'')}</p><div class="row"><button class="btn" id="ct-back" data-a="step" data-v="analyse">Analyse nog aanpassen</button><button class="btn btn-p" id="ct-go" data-a="tobouwen">Spel bouwen</button></div></section>`;
+ return `<div class="grid2"><section class="panel strong" aria-labelledby="ct"><h2 id="ct">Laat jullie analyse zien</h2>
+  <p><span class="status wacht">Wacht op de leerkracht</span></p>
+  <p>Roep de leerkracht. Laat zien wat jullie hebben gemaakt en vertel waarom jullie deze keuzes hebben gemaakt.</p>
+  <p class="hint">Jullie antwoord op de checkvraag: "${esc(w.checks.text)}"</p>
+  <div><button class="btn" id="ct-back" data-a="step" data-v="analyse">Analyse bekijken of aanpassen</button></div></section>
+ <section class="panel" aria-labelledby="lk"><h2 id="lk" style="font-size:1.1rem">Voor de leerkracht</h2>
+  <div class="field"><label for="code-in">Leerkrachtcode</label><input type="password" id="code-in" data-in="codein" value="${esc(S.ui.codeIn)}" inputmode="numeric" autocomplete="off" aria-describedby="code-err"></div>
+  <div class="field"><label for="lk-note">Bijsturing voor het groepje (optioneel)</label><textarea id="lk-note" data-in="note" style="min-height:56px">${esc(w.note)}</textarea></div>
+  <div class="row"><button class="btn btn-p" id="lk-ok" data-a="approve-here">Akkoord</button><button class="btn" id="lk-no" data-a="reject-here">Nog aanpassen</button></div>
+  <p class="hint" id="code-err" role="status" style="color:var(--warn)">${esc(S.ui.codeErr)}</p></section></div>`;
+}
+
+/* Spel bouwen */
+function vBouwen(g){
+ const w=W(g), goal=S.lesson.goal;
+ if(!w.game) w.game=buildGame(goal,w.analysis);
+ const top = `<div class="panel" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between"><p class="hint" style="max-width:70ch">Het spel is gemaakt uit jullie analyse. Wat je hier aanpast, verandert alleen het spel, niet jullie analyse.</p>
+  ${S.ui.confirmReset?`<div class="row" role="group" aria-label="Bevestigen"><span><strong>Alle spelkaarten opnieuw maken?</strong> Aanpassingen in het spel gaan verloren.</span><button class="btn btn-s btn-p" id="rs-yes" data-a="regen-yes">Ja, opnieuw maken</button><button class="btn btn-s" id="rs-no" data-a="regen-no">Nee</button></div>`:`<button class="btn btn-s" id="regen" data-a="regen">Opnieuw maken uit analyse</button>`}</div>`;
+ const next = `<div class="panel strong" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap"><div class="row"><button class="btn" id="dl-game" data-a="dlgame">Spelmateriaal downloaden</button><span class="hint" id="dlg-msg"></span></div><button class="btn btn-p" id="to-play" data-a="step" data-v="spelen">Spel klaar: naar spelen</button></div>`;
+ if(goal==='pad') return top+vBouwPad(w.game)+next;
+ if(goal==='kwartet') return top+vBouwKw(w.game)+next;
+ return top+vBouwMem(w.game)+next;
+}
+function padTrack(game){
+ const t=[{kind:'start',phase:'begin'}];
+ game.vakken.forEach((v,i)=>{ for(let k=0;k<game.gap;k++) t.push({kind:'leeg',phase:v.phase}); t.push({kind:'vak',v,phase:v.phase,n:i+1}); });
+ for(let k=0;k<game.gap;k++) t.push({kind:'leeg',phase:'einde'});
+ t.push({kind:'finish',phase:'einde'}); return t;
+}
+function boardSVG(game, pawns){
+ const t=padTrack(game), n=t.length, Wd=1000, Hd=430, dx=(Wd-40)/n, s=Math.min(58,dx*.86);
+ // hoogte per vak, gladgestreken
+ const raw=t.map(x=>PH(x.phase).h); const hs=raw.map((h,i)=>{let a=0,c=0;for(let j=i-1;j<=i+1;j++){if(j>=0&&j<n){a+=raw[j];c++;}}return a/c;});
+ let out=`<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="Speelbord met ${n} vakken van start tot einde, in de vorm van een verhaalberg">`;
+ out+=R(0,0,Wd,Hd,'#FFFFFF');
+ t.forEach((x,i)=>{const cx=20+i*dx, top=Hd-30-hs[i]*(Hd-120)-s; out+=R(cx,top+s,dx+.5,Hd-(top+s),PHTINT[x.phase]);});
+ out+=R(0,Hd-6,Wd,6,'#1F2B5D');
+ t.forEach((x,i)=>{
+  const cx=20+i*dx+(dx-s)/2, top=Hd-30-hs[i]*(Hd-120)-s;
+  if(x.kind==='vak'){ out+=R(cx,top,s,s,PHHEX[x.phase])+`<text x="${cx+s/2}" y="${top+s/2+6}" text-anchor="middle" font-size="${Math.min(18,s*.38)}" font-weight="700" fill="#fff" font-family="Lexend,sans-serif">${x.n}</text>`; }
+  else if(x.kind==='leeg'){ out+=`<rect x="${cx+1}" y="${top+1}" width="${s-2}" height="${s-2}" fill="#fff" stroke="#1F2B5D" stroke-width="2"/>`; }
+  else { out+=R(cx,top,s,s,'#1F2B5D')+`<text x="${cx+s/2}" y="${top-8}" text-anchor="middle" font-size="15" font-weight="700" fill="#1F2B5D" font-family="Lexend,sans-serif">${x.kind==='start'?'Start':'Einde'}</text>`+(x.kind==='finish'?C(cx+s/2,top+s/2,s*.22,'#F3F199'):R(cx+s*.3,top+s*.3,s*.4,s*.4,'#F3F199')); }
+ });
+ (pawns||[]).forEach((p,k)=>{ const i=Math.min(p.pos,n-1); const cx=20+i*dx+dx/2, top=Hd-30-hs[i]*(Hd-120)-s; const r=Math.min(13,s*.26); const yy=top-r-4-(k*(r*2+3)) - (t[i].kind==='start'||t[i].kind==='finish'?20:0);
+  out+=`<circle cx="${cx}" cy="${yy}" r="${r}" fill="${TEAMCOL[k]}" stroke="#1F2B5D" stroke-width="2"/><text x="${cx}" y="${yy+r*.38}" text-anchor="middle" font-size="${r*1.05}" font-weight="700" fill="#1F2B5D" font-family="Lexend,sans-serif">${k+1}</text>`; });
+ return out+'</svg>';
+}
+function vBouwPad(game){
+ return `<section class="stack" aria-labelledby="bb"><div class="head"><h2 id="bb">Speelbord</h2><div class="field" style="width:auto"><label for="gap">Lege vakken tussen de gebeurtenissen</label><select id="gap" data-ch="gap" style="width:auto">${[0,1,2].map(k=>`<option value="${k}" ${game.gap===k?'selected':''}>${k}</option>`).join('')}</select></div></div>
+  <div class="board">${boardSVG(game)}</div>
+  <ul class="legend">${game.vakken.map((v,i)=>`<li><span class="sq" style="background:${phColor(v.phase)}">${i+1}</span><span><strong>${PH(v.phase).name}:</strong> ${esc(v.event)}</span></li>`).join('')}</ul></section>
+ <section class="stack" aria-labelledby="sk"><h2 id="sk">Spelkaarten bij de gekleurde vakken</h2><p class="hint">Kies per vak welke opdracht de spelers krijgen. Klopt hun antwoord niet met het verhaal, dan gaan ze stappen terug.</p>
+  ${game.vakken.map((v,i)=>`<article class="vak" aria-labelledby="vh-${v.id}"><div class="vl" style="background:${phColor(v.phase)}"><span class="big" id="vh-${v.id}">Vak ${i+1}</span><span>${PH(v.phase).name}</span>${v.pic?`<span style="background:#fff;width:52px;height:52px;padding:4px">${picHTML(v.pic,'')}</span>`:''}</div>
+   <div class="vr"><p class="hint"><strong>Gebeurtenis:</strong> ${esc(v.event)}</p>
+    <div class="row" style="align-items:flex-end"><div class="field" style="width:auto"><label for="vt-${v.id}">Soort opdracht</label><select id="vt-${v.id}" data-ch="vtask" data-id="${v.id}" style="width:auto">${Object.entries(TASKS).map(([k,x])=>`<option value="${k}" ${v.task===k?'selected':''}>${x.name}</option>`).join('')}</select></div>
+     <div class="field" style="width:auto"><label for="vbk-${v.id}">Klopt het niet? Ga terug</label><select id="vbk-${v.id}" data-ch="vback" data-id="${v.id}" style="width:auto">${[1,2,3].map(k=>`<option value="${k}" ${v.back===k?'selected':''}>${k} ${k===1?'stap':'stappen'}</option>`).join('')}</select></div>
+     <button class="btn btn-s" id="pic-${v.id}" data-a="pic" data-t="vak" data-id="${v.id}">${v.pic?'Beeld wijzigen':'Beeld kiezen'}</button></div>
+    <div class="field"><label for="vx-${v.id}">Tekst op de spelkaart</label><textarea id="vx-${v.id}" data-in="vtext" data-id="${v.id}" style="min-height:56px">${esc(v.text)}</textarea></div>
+    ${v.task==='kies'?`<div class="grid2"><div class="field"><label for="va-${v.id}">Keuze A</label><input type="text" id="va-${v.id}" data-in="vopt" data-f="a" data-id="${v.id}" value="${esc(v.a)}"></div><div class="field"><label for="vb2-${v.id}">Keuze B</label><input type="text" id="vb2-${v.id}" data-in="vopt" data-f="b" data-id="${v.id}" value="${esc(v.b)}"></div></div><p class="hint">Eén keuze komt uit het verhaal, de andere bedenken jullie zelf. Jullie vertellen de spelers niet welke goed is.</p>`:''}
+   </div></article>`).join('')}</section>`;
+}
+function vBouwKw(game){
+ return `<section class="stack" aria-labelledby="kk"><h2 id="kk">Kwartetkaarten</h2><p class="hint">Elk personage is een kwartet van vier kaarten. Het kwartet van de hoofdfiguur is 3 punten waard, van een bijfiguur 1 punt.</p>
+ ${game.sets.map(st=>`<div class="stack" style="gap:10px"><h3>${esc(st.name)} <span class="status ${st.role==='hoofd'?'ok':'neutral'}">${st.role==='hoofd'?'Hoofdfiguur · 3 punten':'Bijfiguur · 1 punt'}</span></h3>
+  <div class="cards">${st.cards.map(c=>`<div class="kcard"><div class="kh" style="background:${st.role==='hoofd'?'var(--spanning)':'#7A3D7E'}"><span>${esc(st.name)}</span><span>${st.role==='hoofd'?3:1} p</span></div>
+   <div class="kb"><div class="row" style="gap:8px">${st.pic?`<span style="width:40px;height:40px">${picHTML(st.pic,'')}</span>`:''}<strong>${c.t}</strong></div><label class="sr" for="kc-${st.id}-${c.k}">${esc(st.name)}: ${c.t}</label><textarea id="kc-${st.id}-${c.k}" data-in="kcard" data-s="${st.id}" data-k="${c.k}">${esc(c.text)}</textarea>
+   <div class="kl">${st.cards.map(x=>x.k===c.k?`<b>${x.t}</b>`:`<span>${x.t}</span>`).join('')}</div></div></div>`).join('')}</div></div>`).join('')}</section>`;
+}
+function vBouwMem(game){
+ return `<section class="stack" aria-labelledby="mm"><h2 id="mm">Memorykaarten</h2><p class="hint">Elk paar wordt twee kaarten. Pas de tekst aan als die te lang is voor een kaart.</p>
+ ${game.pairs.map((p,i)=>{const K=PAIR_KIND[p.kind];return `<div class="grid2" role="group" aria-label="Paar ${i+1}">${['a','b'].map(s=>`<div class="kcard"><div class="kh" style="background:${s==='a'?K.ca:K.cb}"><span>${s==='a'?K.a:K.b}</span><span>paar ${i+1}</span></div><div class="kb"><div class="row" style="gap:8px">${(s==='a'?p.picA:p.picB)?`<span style="width:40px;height:40px">${picHTML(s==='a'?p.picA:p.picB,'')}</span>`:''}</div><label class="sr" for="mc-${p.id}-${s}">${s==='a'?K.a:K.b} van paar ${i+1}</label><textarea id="mc-${p.id}-${s}" data-in="mcard" data-id="${p.id}" data-f="${s}">${esc(p[s])}</textarea></div></div>`).join('')}</div>`;}).join('')}</section>`;
+}
+
+/* Spelen */
+function vSpelen(g){
+ const w=W(g), goal=S.lesson.goal;
+ const asks=`<section class="panel" aria-labelledby="vm"><h2 id="vm" style="font-size:1.1rem">Na het spelen: vragen aan de makers</h2><ul class="flow" style="padding:0;margin:0">${(goal==='pad'?['Waarom staat deze gebeurtenis op dit vak?','Waarom is dit het spannendste moment?','Waarom hebben jullie deze gebeurtenis wel of niet opgenomen?']:goal==='kwartet'?['Waarom is dit de hoofdfiguur?','Is dit personage een helper of een tegenspeler? Hoe weet je dat?','Waarom heeft dit personage geen eigen kwartet?']:['Waarom horen deze twee kaarten bij elkaar?','Is dit een probleem en oplossing, of een oorzaak en gevolg?','Welk paar vonden jullie het moeilijkst?']).map(q=>`<li>${q}</li>`).join('')}</ul></section>`;
+ if(goal==='kwartet') return `<div class="grid2"><section class="panel strong" aria-labelledby="kq"><h2 id="kq">Kwartet speel je aan tafel</h2><p>Download de kaarten, print ze en knip ze uit. Een ander groepje speelt jullie kwartet.</p>${rulesHTML('kwartet')}<div class="row"><button class="btn btn-p" id="dl-game" data-a="dlgame">Kaarten downloaden</button><span class="hint" id="dlg-msg"></span></div></section>${asks}</div>`;
+ if(goal==='pad') return vPlayPad(g)+asks;
+ return vPlayMem(g)+asks;
+}
+function rulesHTML(goal){ return `<ol class="flow" style="padding:0;margin:0">${RULES[goal].map(r=>`<li>${r}</li>`).join('')}</ol>`; }
+const RULES = {
+ pad:['Speel met 2 tot 4 teams. Zet alle pionnen op Start.','Gooi om de beurt met de dobbelsteen en loop zoveel vakken vooruit.','Kom je op een gekleurd vak? Lees de spelkaart voor en doe de opdracht.','Probeer het eerst uit je hoofd. Twijfel je? Kijk dan in het verhaal.','Controleer samen of het klopt met het verhaal. Klopt het niet? Ga dan terug zoals op de kaart staat.','Het team dat als eerste bij het einde is, wint.'],
+ kwartet:['Speel met 3 tot 5 spelers. Schud de kaarten en deel ze allemaal.','Vraag om de beurt een kaart aan iemand. Noem het personage en de kaart, bijvoorbeeld: "Opa: wat wil hij?"','Heeft die speler de kaart? Dan krijg je hem en mag je nog een keer vragen. Zo niet, dan is die speler aan de beurt.','Heb je alle vier de kaarten van een personage? Leg het kwartet neer en vertel wat je over dit personage weet.','Het kwartet van de hoofdfiguur is 3 punten waard, een kwartet van een bijfiguur 1 punt.','Als alle kwartetten op tafel liggen, tel je de punten.'],
+ memory:['Speel met 2 teams. Leg alle kaarten omgekeerd neer.','Draai om de beurt twee kaarten om.','Horen ze bij elkaar? Leg uit waarom: wat is het probleem en de oplossing, of de oorzaak en het gevolg?','Klopt jullie uitleg met het verhaal? Dan houd je het paar en mag je nog een keer. Klopt het niet? Draai de kaarten terug.','Horen de kaarten niet bij elkaar? Draai ze terug. Het andere team is aan de beurt.','Twijfel je? Kijk in het verhaal of vraag het de makers.'],
+};
+function vPlayPad(g){
+ const w=W(g), game=w.game; if(!w.play) w.play={teams:2,names:['Team 1','Team 2','Team 3','Team 4'],pos:[0,0,0,0],turn:0,roll:null,card:null,win:null,log:''};
+ const p=w.play, track=padTrack(game), last=track.length-1;
+ const card=p.card!=null?track[p.card]:null;
+ return `<div class="play"><section class="stack" aria-labelledby="pl"><div class="head"><h2 id="pl">${GOALS.pad.game}: ${esc(S.lesson.title)}</h2>
+  <div class="field" style="width:auto"><label for="tc">Aantal teams</label><select id="tc" data-ch="teams" style="width:auto">${[2,3,4].map(k=>`<option ${p.teams===k?'selected':''}>${k}</option>`).join('')}</select></div></div>
+  <div class="board">${boardSVG(game,p.pos.slice(0,p.teams).map(x=>({pos:x})))}</div>
+  <p class="hint">Posities: ${p.pos.slice(0,p.teams).map((x,k)=>`${esc(p.names[k])} ${where(track,x)}`).join(', ')}.</p>
+  ${card&&card.kind==='vak'?taskCard(card,p):''}
+ </section>
+ <aside class="stack"><section class="panel strong" aria-labelledby="bt"><h2 id="bt" style="font-size:1.1rem">${p.win!=null?'Gewonnen!':'Aan de beurt'}</h2>
+  <div class="teams">${p.names.slice(0,p.teams).map((nm,k)=>`<div class="team ${k===p.turn&&p.win==null?'now':''}"><span class="pawn" style="background:${TEAMCOL[k]}" aria-hidden="true">${k+1}</span><label class="sr" for="tn${k}">Naam team ${k+1}</label><input type="text" id="tn${k}" data-in="tname" data-v="${k}" value="${esc(nm)}" style="min-height:40px;padding:6px 8px">${k===p.turn&&p.win==null?'<span class="sr">is aan de beurt</span>':''}</div>`).join('')}</div>
+  ${p.win!=null?`<p><strong>${esc(p.names[p.win])}</strong> is als eerste bij het einde.</p><button class="btn btn-p" id="again" data-a="padreset">Opnieuw spelen</button>`
+   :`<div class="row"><div class="die" aria-hidden="true">${dieDots(p.roll)}</div><div class="stack" style="gap:6px"><button class="btn btn-p" id="roll" data-a="roll" ${card?'disabled':''}>Gooi de dobbelsteen</button><span class="hint" role="status">${esc(p.log)}</span></div></div>`}
+  </section><section class="panel"><h2 style="font-size:1.1rem">Spelregels</h2>${rulesHTML('pad')}<button class="btn btn-s" id="padreset" data-a="padreset">Spel opnieuw beginnen</button></section></aside></div>`;
+}
+function where(track,x){ const t=track[x]; if(t.kind==='start') return 'op Start'; if(t.kind==='finish') return 'bij het Einde'; if(t.kind==='vak') return `op vak ${t.n} (${PH(t.phase).name})`; let j=x; while(j>0&&track[j].kind!=='vak') j--; return track[j].kind==='vak'?`op een leeg vak na vak ${track[j].n}`:'op een leeg vak na Start'; }
+function dieDots(n){ const m={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[n]||[]; return Array.from({length:9},(_,i)=>`<i class="${m.includes(i)?'on':''}"></i>`).join(''); }
+function taskCard(x,p){
+ const v=x.v;
+ return `<article class="taskcard" id="taskcard" tabindex="-1" aria-labelledby="tch"><div class="th" style="background:${phColor(v.phase)}"><h3 id="tch">Vak ${x.n} · ${TASKS[v.task].name}</h3><span>${esc(p.names[p.turn])}</span></div>
+ <div class="tb">${v.pic?`<span style="width:64px;height:64px">${picHTML(v.pic,'')}</span>`:''}
+  ${v.task==='hierna'||v.task==='vertel'?`<p><strong>Gebeurtenis:</strong> ${esc(v.event)}</p>`:''}
+  <p style="font-size:1.15rem">${esc(v.text)}</p>
+  ${v.task==='kies'?`<div class="stack"><div class="opt"><b>A</b><span>${esc(v.a||'(nog geen keuze ingevuld)')}</span></div><div class="opt"><b>B</b><span>${esc(v.b||'(nog geen keuze ingevuld)')}</span></div></div>`:''}
+  <p class="hint">Eerst uit je hoofd. Twijfel je? Kijk in het verhaal of vraag de makers. Beslis samen of het klopt.</p>
+  <div class="row"><button class="btn btn-p" id="tc-ok" data-a="tc-ok">Klopt met het verhaal</button><button class="btn" id="tc-no" data-a="tc-no">Klopt niet: ${v.back} ${v.back===1?'stap':'stappen'} terug</button></div></div></article>`;
+}
+function vPlayMem(g){
+ const w=W(g), game=w.game;
+ if(!w.play){ const cards=game.pairs.flatMap(p=>[{pid:p.id,s:'a'},{pid:p.id,s:'b'}]); shuffle(cards); w.play={cards,open:[],taken:{},turn:0,names:['Team 1','Team 2'],state:'pick',won:{0:[],1:[]}}; }
+ const p=w.play, pairOf=id=>game.pairs.find(x=>x.id===id);
+ const done = Object.keys(p.taken).length===game.pairs.length;
+ const o=p.open.map(i=>p.cards[i]);
+ let panel='';
+ if(p.state==='pair'){ const pr=pairOf(o[0].pid), K=PAIR_KIND[pr.kind]; panel=`<div class="taskcard" id="taskcard" tabindex="-1"><div class="th" style="background:var(--ink)"><h3>Deze kaarten horen bij elkaar</h3><span>${esc(p.names[p.turn])}</span></div><div class="tb"><p style="font-size:1.1rem">Leg uit waarom: ${K.name.toLowerCase()}.</p><p class="hint">Twijfel je? Kijk in het verhaal of vraag het de makers. Beslis samen of de uitleg klopt.</p><div class="row"><button class="btn btn-p" id="mm-ok" data-a="mm-ok">Uitleg klopt: paar houden</button><button class="btn" id="mm-no" data-a="mm-no">Klopt nog niet: terugdraaien</button></div></div></div>`; }
+ if(p.state==='nopair') panel=`<div class="taskcard" id="taskcard" tabindex="-1"><div class="th" style="background:var(--ink)"><h3>Geen paar</h3><span>${esc(p.names[p.turn])}</span></div><div class="tb"><p>Onthoud waar deze kaarten liggen.</p><div><button class="btn btn-p" id="mm-next" data-a="mm-next">Kaarten terugdraaien</button></div></div></div>`;
+ return `<div class="play"><section class="stack" aria-labelledby="pm"><h2 id="pm">${GOALS.memory.game}: ${esc(S.lesson.title)}</h2>
+  <div class="mgrid">${p.cards.map((c,i)=>{const pr=pairOf(c.pid), K=PAIR_KIND[pr.kind], up=p.open.includes(i), gone=p.taken[c.pid]!=null;
+   if(gone) return `<div class="mcard gone" aria-hidden="true"></div>`;
+   return up?`<button class="mcard" id="mc${i}" disabled aria-label="Kaart ${i+1}: ${c.s==='a'?K.a:K.b}: ${esc(pr[c.s])}"><span class="face"><span class="mh" style="background:${c.s==='a'?K.ca:K.cb}">${c.s==='a'?K.a:K.b}</span><span class="mb">${picHTML(c.s==='a'?pr.picA:pr.picB,'')}<span>${esc(pr[c.s])}</span></span></span></button>`
+    :`<button class="mcard" id="mc${i}" data-a="flip" data-v="${i}" ${p.state!=='pick'?'disabled':''} aria-label="Kaart ${i+1}, omgedraaid"><span class="back">${LOGO('#5EC8D8','#F59395')}</span></button>`;}).join('')}</div>
+  ${panel}
+ </section><aside class="stack"><section class="panel strong"><h2 style="font-size:1.1rem">${done?'Alle paren zijn gevonden':'Aan de beurt'}</h2>
+  <div class="teams">${[0,1].map(k=>`<div class="team ${k===p.turn&&!done?'now':''}"><span class="pawn" style="background:${TEAMCOL[k]}" aria-hidden="true">${k+1}</span><label class="sr" for="mtn${k}">Naam team ${k+1}</label><input type="text" id="mtn${k}" data-in="mtname" data-v="${k}" value="${esc(p.names[k])}" style="min-height:40px;padding:6px 8px"><span class="hint" style="white-space:nowrap">${p.won[k].length} ${p.won[k].length===1?'paar':'paren'}</span></div>`).join('')}</div>
+  <p class="hint" role="status">${done?'Bespreek nu met de makers waarom de kaarten bij elkaar horen.':p.state==='pick'?`${esc(p.names[p.turn])}: draai ${p.open.length?'nog één kaart':'twee kaarten'} om.`:''}</p>
+  <button class="btn btn-s" id="mreset" data-a="memreset">Spel opnieuw beginnen</button></section>
+  <section class="panel"><h2 style="font-size:1.1rem">Spelregels</h2>${rulesHTML('memory')}</section></aside></div>`;
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* Uitleg voor leerkrachten */
+function vUitleg(){
+ return `<div class="head"><div class="stack" style="gap:6px"><span class="kicker">Leerkracht</span><h1>Uitleg voor leerkrachten</h1></div></div>
+ <nav class="toc" aria-label="Op deze pagina"><a href="#u-werking">Werking</a><a href="#u-spellen">De drie spellen</a><a href="#u-diff">Differentiatie</a><a href="#u-doelen">Doelen</a><a href="#u-begrippen">Begrippen</a></nav>
+ <p class="note">De doelen en begrippen hieronder zijn aangeleverd materiaal. De formuleringen, de uitleg bij de begrippen en de koppeling aan de leerdoelen zijn nog niet extern gecontroleerd.</p>
+ <section class="panel" id="u-werking" aria-labelledby="uw"><h2 id="uw">Hoe de werkvorm werkt</h2><div class="prose">
+  <p>Leerlingen analyseren in groepjes één aspect van een verhaal dat je hebt voorgelezen. Uit die analyse bouwen ze een spel. Een ander groepje speelt het spel en stelt daarna vragen over de keuzes van de makers. Het spel is dus geen beloning na afloop. De keuzes in het spel laten zien hoe de leerlingen de verhaalstructuur begrijpen.</p>
+  <ol class="flow"><li><span><strong>Instellen.</strong> Je vult de titel in, kiest het leerdoel met het bijbehorende spel en maakt groepjes. Je kiest of de leerlingen op scherm of op papier werken.</span></li><li><span><strong>Analyse.</strong> Leerlingen vullen alleen de kaarten en hulpvragen in die bij het leerdoel horen.</span></li><li><span><strong>Checkvragen.</strong> Het groepje bespreekt een paar korte vragen en beantwoordt er één schriftelijk.</span></li><li><span><strong>Controlemoment.</strong> Je kijkt mee en stuurt bij. Daarna geef je akkoord met je leerkrachtcode, of in het lesoverzicht. Per groepje kun je aangeven dat controle niet nodig is.</span></li><li><span><strong>Spel bouwen.</strong> De app maakt het spel uit de analyse. Leerlingen kunnen de spelkaarten aanpassen. Hun analyse verandert daardoor niet, zodat zichtbaar blijft wat ze eerst analyseerden.</span></li><li><span><strong>Spelen en vragen stellen.</strong> Een ander groepje speelt. De spelers beslissen zelf of hun uitleg klopt met het verhaal. De app beoordeelt dat niet.</span></li></ol>
+  <p><strong>Vertel vooraf</strong> dat leerlingen tijdens het spelen gebeurtenissen en verbanden uit het verhaal moeten onthouden. Ze proberen het eerst uit hun hoofd. Bij twijfel mogen ze het verhaal raadplegen: een kort verhaal kun je uitdelen, een boek kunnen ze even lenen.</p>
+  <p>Als groepjes over hetzelfde verhaal en leerdoel werken, kun je hun spellen klassikaal vergelijken. Waarom legt het ene groepje het spannendste moment ergens anders dan het andere?</p></div></section>
+ <section class="panel" id="u-spellen" aria-labelledby="us"><h2 id="us">De drie spellen</h2><div class="grid3">${Object.entries(GOALS).map(([k,g])=>`<div class="stack"><span class="ill" style="height:64px">${ILL[k]}</span><h3>${g.game}</h3><p class="hint"><strong>Leerdoel:</strong> ${g.name}. ${g.fits}</p><p>${g.does}</p><details><summary style="cursor:pointer;font-weight:600;min-height:32px">Spelregels</summary>${rulesHTML(k)}</details></div>`).join('')}</div></section>
+ <section class="panel" id="u-diff" aria-labelledby="ud"><h2 id="ud">Differentiatie</h2><div class="prose"><ul>
+  <li><strong>Aantal begrippen per groepje.</strong> De app kiest begrippen die bij het leerdoel passen. Jij bepaalt per groepje hoeveel het er verwerkt. Een kleinere set maakt de analyse beter te overzien.</li>
+  <li><strong>Uitleg op verzoek.</strong> Leerlingen kunnen bij hun begrippen uitleg openen terwijl ze werken. Die uitleg vervangt niet het toepassen van het begrip op het verhaal.</li>
+  <li><strong>Controle per groepje.</strong> Groepjes die het zelfstandig kunnen, laat je zonder controle verder gaan. Bij andere groepjes kijk je eerst mee.</li>
+  <li><strong>Soort opdracht in het Verhaalpad.</strong> "Kies" en "Wat gebeurt hierna?" vragen om volgorde. "Vertel" en "Obstakel" vragen om uitleg over het belang van een gebeurtenis.</li>
+  <li><strong>Scherm of papier, tekenen of afbeeldingen.</strong> Zelf tekenen vraagt leerlingen te kiezen wat het belangrijkste kenmerk is. Pictogrammen helpen leerlingen voor wie tekenen of schrijven veel tijd kost.</li></ul></div></section>
+ <section class="panel" id="u-doelen" aria-labelledby="ug"><h2 id="ug">Doelen</h2><div class="prose"><p>Per traject analyseren leerlingen één aspect van het voorgelezen verhaal. Ze kunnen hun keuzes over de verhaalstructuur aan een ander groepje uitleggen.</p>
+  <dl class="terms"><dt>Kerndoel 3a</dt><dd>Inzetten en uitbreiden van kennis over de vorm van teksten (tekstsoorten, tekststructuren, verteltechnieken).</dd><dt>Kerndoel 6a</dt><dd>Verkennen hoe woordgebruik, stijlmiddelen en opbouw van teksten de betekenis beïnvloeden.</dd><dt>Kerndoel 9A</dt><dd>Inzicht tonen in verhalende teksten, waaronder de wens of het probleem van een hoofdpersoon en de verhaalontwikkeling, hoofd- en bijfiguren (ook helpers en tegenspelers) en hun kenmerken, spanningsopbouw door verteltechnieken, en waar, wanneer en onder welke omstandigheden het verhaal zich afspeelt.</dd></dl>
+  <h3>Achtergrond bij de begrippen</h3><dl class="terms">
+  <dt>Spanning</dt><dd>Spanningsboog. Verwachtingen door titel, schrijver, flaptekst en illustratie. Uitstel van de ontknoping, verschil tussen wat lezer en verhaalfiguur weten, bijzondere situaties. Invloed van leeservaring, interesse en meeleven. Ook humor hoort hierbij.</dd>
+  <dt>Basiselementen</dt><dd>Ruimte (plaats en tijd), verhaalfiguren en situaties bepalen de handeling (plot), waarin het thema zich ontwikkelt.</dd>
+  <dt>Ruimte en tijd</dt><dd>Plaats en tijd, belangenruimte, informatieve opening of opening-in-de-handeling, open of gesloten einde, chronologisch, onderbroken of niet-chronologisch verhaal, flashback, flashforward, tijdvertraging en tijdversnelling.</dd>
+  <dt>Verhaalfiguren</dt><dd>Uiterlijke en innerlijke kenmerken en handelingen, hoofdfiguren en bijfiguren, karakter, type en karikatuur.</dd>
+  <dt>Verhaalsituaties</dt><dd>Beginsituatie, situaties die een nieuw element toevoegen en slotsituatie.</dd>
+  <dt>Vertelwijze en perspectief</dt><dd>Ik-verhaal, auctoriaal verhaal en personaal verhaal (hij/zij-verhaal).</dd>
+  <dt>Thema en motieven</dt><dd>Thema als grondgedachte, motieven als signalen daarvoor, leidmotieven als details die door herhaling belangrijk worden. Genoemde thematische verhoudingen: mens en natuur, en mensen onderling.</dd></dl></div></section>
+ <section class="panel" id="u-begrippen" aria-labelledby="ub"><h2 id="ub">Begrippen per leerdoel</h2><p class="hint">De app neemt voor een groepje de eerste begrippen uit deze lijsten, in deze volgorde. Niet ieder begrip komt in een van de drie trajecten terug.</p>
+  <div class="grid3">${Object.entries(GOAL_TERMS).map(([k,ts])=>`<div class="stack"><h3>${GOALS[k].game}</h3><ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">${ts.map(t=>`<li>${esc(t)}</li>`).join('')}</ol></div>`).join('')}</div>
+  <h3>Uitleg voor leerlingen</h3><dl class="terms">${ALL_TERMS.filter(t=>TERMS[t]).map(t=>`<dt>${esc(t)}</dt><dd>${esc(TERMS[t])}</dd>`).join('')}</dl>
+  <p class="hint">Niet in een traject opgenomen: ${ALL_TERMS.filter(t=>!Object.values(GOAL_TERMS).flat().includes(t)).join(', ')}.</p></section>`;
+}
+
+/* ---------- Kleine iconen voor knoppen ---------- */
+const ICO = {
+ plus:'<svg viewBox="0 0 20 20" aria-hidden="true" width="18" height="18"><rect x="9" y="3" width="2.4" height="14" fill="currentColor"/><rect x="3" y="9" width="14" height="2.4" fill="currentColor"/></svg>',
+ minus:'<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="9" width="14" height="2.4" fill="currentColor"/></svg>',
+ up:'<svg viewBox="0 0 20 20" aria-hidden="true"><polygon points="10,3 17,11 12,11 12,17 8,17 8,11 3,11" fill="currentColor"/></svg>',
+ down:'<svg viewBox="0 0 20 20" aria-hidden="true"><polygon points="10,17 17,9 12,9 12,3 8,3 8,9 3,9" fill="currentColor"/></svg>',
+ trash:'<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="2.2" fill="currentColor"/><rect x="8" y="2" width="4" height="2" fill="currentColor"/><polygon points="5,7 15,7 14,18 6,18" fill="currentColor"/></svg>',
+ image:'<svg class="plus" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="3" width="16" height="14" fill="none" stroke="#465078" stroke-width="2"/><circle cx="7" cy="8" r="2" fill="#465078"/><polygon points="4,15 9,10 12,13 14,11 16,15" fill="#465078"/></svg>',
+};
+
+/* ---------- Werkbladen (A4) ---------- */
+function a4head(goal, title){ return `<div class="ah"><div style="display:flex;gap:14px;align-items:center"><span style="width:52px;height:41px;display:block">${LOGO()}</span><div><div class="t1">${GOALS[goal].game} · ${GOALS[goal].name}</div><h2>${title}</h2></div></div><div class="who"><div class="ln"><span>Namen:</span><span></span></div><div class="ln"><span>Verhaal:</span><span></span></div></div></div>`; }
+const a4foot = (r) => `<div class="foot"><span>Verhaalbouwers · groep 6-8</span><span>${r||''}</span></div>`;
+const wl = n => Array.from({length:n},()=>'<div class="wl"></div>').join('');
+function paperPages(goal, img){
+ const pages=[]; const frame = img==='tekenen'?'Teken hier':'Plak hier een pictogram';
+ if(goal==='pad'){
+  const pad=[150,80,0,80,150];
+  pages.push(`<div class="a4">${a4head('pad','De verhaalberg')}<p style="font-size:15px">Schrijf bij elk deel van de berg wat er gebeurt. Schrijf zoveel gebeurtenissen op als nodig is. Kies alleen wat belangrijk is voor het verhaal.</p>
+   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;height:520px">${PHASES.map((p,i)=>`<div style="display:flex;flex-direction:column"><div style="height:${pad[i]}px"></div><div style="background:${PHHEX[p.id]};color:#fff;padding:8px"><div style="font-weight:700;font-size:14px">${p.name}</div><div style="font-size:10.5px;line-height:1.3">${p.q}</div></div><div style="flex:1;background:${PHTINT[p.id]};padding:6px 8px;display:flex;flex-direction:column;justify-content:space-around">${wl(Math.round((520-pad[i]-70)/30))}</div></div>`).join('')}</div>
+   <div class="lab">Alle gebeurtenissen op volgorde</div><div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(6,auto);grid-auto-flow:column;column-gap:26px;row-gap:2px;font-size:14px">${Array.from({length:12},(_,i)=>{const n=i<6?i*2+1:(i-6)*2+2; const k=i<6?i+1:i+1; return `<div class="ln"><span style="width:20px;font-weight:700">${i+1}</span><span></span></div>`;}).join('')}</div>
+   ${a4foot('Werkblad 1: analyse')}</div>`);
+ }
+ if(goal==='kwartet'){
+  pages.push(`<div class="a4">${a4head('kwartet','Personages')}<p style="font-size:15px">Vul voor elk belangrijk personage een vak in. Zet een kruisje bij hoofdfiguur of bijfiguur. Gebruik de achterkant voor meer personages.</p>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1">${[0,1,2,3].map(()=>`<div class="box" style="gap:6px"><div class="ln" style="font-size:14px"><span><b>Naam:</b></span><span></span></div><div style="display:flex;gap:16px;font-size:13px;flex-wrap:wrap"><span><i class="cb"></i> Hoofdfiguur</span><span><i class="cb"></i> Bijfiguur:</span><span><i class="cb"></i> helper</span><span><i class="cb"></i> tegenspeler</span></div>${KW_Q.map(q=>`<div style="font-size:12.5px;font-weight:700;margin-top:4px">${q.t}</div>${wl(2)}`).join('')}<div style="font-size:12.5px;font-weight:700;margin-top:4px">Waarom (minder) belangrijk?</div>${wl(1)}</div>`).join('')}</div>
+   ${a4foot('Werkblad 1: analyse')}</div>`);
+ }
+ if(goal==='memory'){
+  pages.push(`<div class="a4">${a4head('memory','Paren die bij elkaar horen')}<p style="font-size:15px">Zoek paren in het verhaal: een probleem en de oplossing, of een oorzaak en het gevolg. Maak er minstens vier.</p>
+   <div style="display:flex;flex-direction:column;gap:9px;flex:1">${[1,2,3,4,5,6].map(i=>`<div class="box" style="display:grid;grid-template-columns:28px 1fr 1fr;gap:10px;align-items:start;padding:8px 10px"><b style="font-size:20px">${i}</b><div><div style="display:flex;gap:12px;font-size:12.5px"><span><i class="cb"></i> Probleem</span><span><i class="cb"></i> Oorzaak</span></div>${wl(2)}</div><div><div style="display:flex;gap:12px;font-size:12.5px"><span><i class="cb"></i> Oplossing</span><span><i class="cb"></i> Gevolg</span></div>${wl(2)}</div><div style="grid-column:2/4;font-size:12.5px"><b>Hoe horen ze bij elkaar?</b>${wl(1)}</div></div>`).join('')}</div>
+   ${a4foot('Werkblad 1: analyse')}</div>`);
+ }
+ // Checkblad
+ const c=CHECKS[goal];
+ pages.push(`<div class="a4">${a4head(goal,'Checkblad')}<p style="font-size:15px">Bespreek elke vraag in jullie groepje. Vink af als het klopt. Klopt iets niet? Pas jullie werkblad aan.</p>
+  <div class="box" style="gap:12px;padding:16px">${c.items.map(t=>`<div style="display:flex;gap:12px;font-size:16px;align-items:flex-start"><i class="cb" style="width:20px;height:20px;margin-top:2px"></i><span>${t}</span></div>`).join('')}</div>
+  <div class="box" style="padding:16px"><div class="lab">Begrippen die wij gebruiken</div><p class="small">De leerkracht vertelt welke begrippen jullie groepje gebruikt. De uitleg staat op de begrippenkaart.</p>${[1,2,3,4,5,6].map(()=>`<div style="display:flex;gap:12px;align-items:flex-end"><i class="cb"></i><div class="wl" style="flex:1"></div></div>`).join('')}</div>
+  <div class="box" style="padding:16px"><div class="lab">${c.ask}</div>${wl(5)}</div>
+  <div class="box" style="padding:16px;flex-direction:row;gap:28px;align-items:center;flex-wrap:wrap"><div class="lab">Controle</div><span style="font-size:15px"><i class="cb"></i> Akkoord van de leerkracht: ____________</span><span style="font-size:15px"><i class="cb"></i> Controle niet nodig</span></div>
+  ${a4foot('Werkblad 2: checkvragen')}</div>`);
+ // Spelmateriaal
+ if(goal==='pad'){
+  const cellsXY=[[0,0]]; for(let k=1;k<=5;k++){cellsXY.push([k-1,k]);cellsXY.push([k,k]);} for(let k=5;k>=1;k--){cellsXY.push([11-k,k]);cellsXY.push([11-k,k-1]);}
+  const st=62, cs=56, base=520, colPh=['begin','begin','probleem','probleem','spanning','spanning','spanning','oplossing','oplossing','einde','einde'];
+  let cells=''; for(let x=0;x<11;x++){ const top=Math.max(...cellsXY.filter(c=>c[0]===x).map(c=>c[1])); cells+=`<div style="position:absolute;left:${6+x*st-3}px;top:${base-top*st+cs}px;width:${st}px;height:${top*st+10}px;background:${PHTINT[colPh[x]]}"></div>`; }
+  cellsXY.forEach(([x,y],i)=>{ const last=i===cellsXY.length-1; cells+=`<div style="position:absolute;left:${6+x*st}px;top:${base-y*st}px;width:${cs}px;height:${cs}px;border:2px solid #1F2B5D;background:${i===0||last?'#1F2B5D':'#fff'};color:${i===0||last?'#fff':'#1F2B5D'};padding:3px 5px;font-size:12px;font-weight:700">${i===0?'Start':last?'Einde':i}</div>`; });
+  pages.push(`<div class="a4">${a4head('pad','Speelbord')}<p style="font-size:15px">Kleur de vakken waar een gebeurtenis komt. Gebruik de kleuren van de verhaalberg. Schrijf het nummer van de spelkaart in het vak. De pionnen lopen van Start de berg op en weer af naar het Einde.</p>
+   <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:13px">${PHASES.map(p=>`<span style="display:flex;gap:6px;align-items:center"><i style="width:16px;height:16px;background:${PHHEX[p.id]};display:inline-block"></i>${p.name}</span>`).join('')}</div>
+   <div style="position:relative;height:600px;margin:0 auto;width:690px">${cells}</div>${a4foot('Spelmateriaal')}</div>`);
+  pages.push(`<div class="a4">${a4head('pad','Spelkaarten')}<p style="font-size:14px">Maak een kaart voor elk gekleurd vak. Knip de kaarten uit langs de stippellijn.</p>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1">${Array.from({length:6},()=>`<div class="cut" style="padding:10px;display:flex;flex-direction:column;gap:5px;font-size:12.5px"><div style="display:flex;justify-content:space-between"><b>Vak nr: ____</b><span>Deel: ____________</span></div><div style="display:flex;gap:10px;flex-wrap:wrap"><span><i class="cb"></i> Vertel</span><span><i class="cb"></i> Wat gebeurt hierna?</span><span><i class="cb"></i> Kies</span><span><i class="cb"></i> Obstakel</span></div><div style="display:grid;grid-template-columns:1fr 78px;gap:8px"><div>${wl(4)}</div><div style="border:1.5px solid #6B7290;height:78px;font-size:10px;color:#465078;padding:3px;text-align:center">${frame}</div></div><div>Klopt het niet? Ga ____ stappen terug.</div></div>`).join('')}</div>${a4foot('Spelmateriaal')}</div>`);
+ }
+ if(goal==='kwartet'){
+  pages.push(`<div class="a4">${a4head('kwartet','Kwartetkaarten')}<p style="font-size:14px">Maak vier kaarten per personage. Schrijf bovenaan de naam, omcirkel welke kaart het is en vul het in. Knip uit langs de stippellijn.</p>
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex:1">${Array.from({length:9},()=>`<div class="cut" style="padding:8px;display:flex;flex-direction:column;gap:4px;font-size:11.5px"><div style="display:flex;justify-content:space-between"><b>Naam: _________</b><span>__ p</span></div><div style="border:1.5px solid #6B7290;height:72px;font-size:10px;color:#465078;padding:3px;text-align:center">${frame}</div>${wl(3)}<div style="line-height:1.35">Wie is het? · Wat wil het?<br>Wat doet het? · Hoe loopt het af?</div></div>`).join('')}</div>${a4foot('Spelmateriaal')}</div>`);
+ }
+ if(goal==='memory'){
+  pages.push(`<div class="a4">${a4head('memory','Memorykaarten')}<p style="font-size:14px">Maak twee kaarten per paar. Kruis aan wat er op de kaart staat. Knip uit langs de stippellijn.</p>
+   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;flex:1">${Array.from({length:12},()=>`<div class="cut" style="padding:7px;display:flex;flex-direction:column;gap:4px;font-size:11px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:2px"><span><i class="cb" style="width:12px;height:12px"></i> Probleem</span><span><i class="cb" style="width:12px;height:12px"></i> Oplossing</span><span><i class="cb" style="width:12px;height:12px"></i> Oorzaak</span><span><i class="cb" style="width:12px;height:12px"></i> Gevolg</span></div><div style="border:1.5px solid #6B7290;height:64px;font-size:10px;color:#465078;padding:3px;text-align:center">${frame}</div>${wl(3)}</div>`).join('')}</div>${a4foot('Spelmateriaal')}</div>`);
+ }
+ // Spelregels
+ pages.push(`<div class="a4">${a4head(goal,'Spelregels')}<div style="display:flex;gap:24px;align-items:flex-start"><div style="flex:1"><ol style="font-size:17px;gap:14px">${RULES[goal].map(r=>`<li>${r}</li>`).join('')}</ol></div><div style="width:200px">${ILL[goal].replace('<svg','<svg style="width:200px;height:auto"')}</div></div>
+  <div class="box" style="padding:16px;margin-top:10px"><div class="lab">Na het spelen</div><p style="font-size:15px">Stel de makers vragen over hun keuzes. Bijvoorbeeld: ${goal==='pad'?'"Waarom staat deze gebeurtenis op dit vak?"':goal==='kwartet'?'"Waarom is dit de hoofdfiguur?"':'"Waarom horen deze kaarten bij elkaar?"'}</p></div>
+  ${a4foot('Spelregelkaart')}</div>`);
+ // Pictogrammen
+ if(img==='afbeeldingen'){
+  pages.push(`<div class="a4">${a4head(goal,'Pictogrammen')}<p style="font-size:14px">Knip de pictogrammen uit en plak ze op jullie kaarten of het bord.</p>
+   <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0;flex:1;align-content:start">${ICONS.map(i=>`<div class="cut" style="margin:-0.75px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px"><svg viewBox="0 0 48 48" style="width:76px;height:76px">${i.s}</svg>${esc(i.name)}</div>`).join('')}</div>${a4foot('Pictogrammenvel')}</div>`);
+ }
+ // Begrippen
+ pages.push(`<div class="a4">${a4head(goal,'Begrippenkaart')}<p style="font-size:15px">Hier staat uitleg bij de begrippen. Jullie leerkracht vertelt welke begrippen jullie groepje gebruikt.</p>
+  <div style="display:flex;flex-direction:column;gap:0">${GOAL_TERMS[goal].map(t=>`<div style="display:grid;grid-template-columns:210px 1fr;gap:12px;border-bottom:1.5px solid #E3E6EF;padding:7px 0;font-size:14px"><b>${esc(t)}</b><span>${esc(TERMS[t])}</span></div>`).join('')}</div>
+  ${a4foot('Begrippenkaart')}</div>`);
+ return pages;
+}
+
+/* ---------- Printbaar spelmateriaal van een groepje (HTML-download) ---------- */
+function gameDoc(g){
+ const w=W(g), goal=S.lesson.goal, game=w.game, title=esc(S.lesson.title);
+ let body='';
+ if(goal==='pad'){
+  body+=`<section class="page land"><h1>${GOALS.pad.game}: ${title}</h1><p>${esc(g.name)}</p><div class="board">${boardSVG(game)}</div></section>`;
+  body+=`<section class="page"><h1>Spelkaarten</h1><div class="cards">${game.vakken.map((v,i)=>`<div class="card"><div class="ch" style="background:${PHHEX[v.phase]}">Vak ${i+1} · ${TASKS[v.task].name}</div><div class="cb">${v.pic?`<div class="pic">${picHTML(v.pic,'')}</div>`:''}${v.task==='hierna'||v.task==='vertel'?`<p><b>Gebeurtenis:</b> ${esc(v.event)}</p>`:''}<p>${esc(v.text)}</p>${v.task==='kies'?`<p><b>A</b> ${esc(v.a)}</p><p><b>B</b> ${esc(v.b)}</p>`:''}<p class="s">Klopt het niet? Ga ${v.back} ${v.back===1?'stap':'stappen'} terug.</p></div></div>`).join('')}</div></section>`;
+ }
+ if(goal==='kwartet'){
+  body+=`<section class="page"><h1>${GOALS.kwartet.game}: ${title}</h1><div class="cards three">${game.sets.flatMap(st=>st.cards.map(c=>`<div class="card"><div class="ch" style="background:${st.role==='hoofd'?'#5C2266':'#7A3D7E'}">${esc(st.name)} · ${st.role==='hoofd'?3:1} punt${st.role==='hoofd'?'en':''}</div><div class="cb">${st.pic?`<div class="pic">${picHTML(st.pic,'')}</div>`:''}<p><b>${c.t}</b></p><p>${esc(c.text)}</p><p class="s">${st.cards.map(x=>x.k===c.k?`<b>${x.t}</b>`:x.t).join(' · ')}</p></div></div>`)).join('')}</div></section>`;
+ }
+ if(goal==='memory'){
+  body+=`<section class="page"><h1>${GOALS.memory.game}: ${title}</h1><div class="cards four">${game.pairs.flatMap(p=>{const K=PAIR_KIND[p.kind];return ['a','b'].map(s=>`<div class="card sq"><div class="ch" style="background:${s==='a'?K.ca:K.cb}">${s==='a'?K.a:K.b}</div><div class="cb">${(s==='a'?p.picA:p.picB)?`<div class="pic">${picHTML(s==='a'?p.picA:p.picB,'')}</div>`:''}<p>${esc(p[s])}</p></div></div>`);}).join('')}</div></section>`;
+ }
+ body+=`<section class="page"><h1>Spelregels</h1><ol>${RULES[goal].map(r=>`<li>${r}</li>`).join('')}</ol></section>`;
+ return `<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>${GOALS[goal].game} ${esc(g.name)}</title><style>
+ body{font-family:Lexend,"Segoe UI",system-ui,sans-serif;color:#1F2B5D;margin:0;padding:20px}h1{font-size:22px;margin:0 0 12px}
+ .page{break-after:page;margin-bottom:30px}.board svg{width:100%;height:auto;border:1px solid #ccc}
+ .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.cards.three{grid-template-columns:repeat(3,1fr)}.cards.four{grid-template-columns:repeat(4,1fr)}
+ .card{border:2px dashed #6B7290;break-inside:avoid;display:flex;flex-direction:column}.card .ch{color:#fff;font-weight:600;padding:6px 8px;font-size:13px}.card .cb{padding:8px;font-size:13px}.card p{margin:0 0 6px}.card .s{font-size:11px;color:#465078}
+ .pic svg,.pic img{width:56px;height:56px}.card.sq{min-height:180px} ol{font-size:16px;line-height:1.6}
+ @page{size:A4;margin:12mm} @media print{body{padding:0}}
+ </style></head><body>${body}<p style="font-size:12px;color:#465078">Gemaakt met Verhaalbouwers. Open dit bestand in je browser en kies Afdrukken.</p></body></html>`;
+}
+
+/* ---------- Downloads ---------- */
+function afterRender(){}
+function saveFile(filename, text, msgSel){ const blob=new Blob([text],{type:'text/html'}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); const m=$(msgSel); if(m) m.textContent='Bestand gedownload. Open het in je browser en kies Afdrukken.'; }
+function printPages(){ const L=S.lesson; $('#printArea').innerHTML=paperPages(L.goal,L.paperImages).join(''); document.body.classList.add('printing'); window.print(); }
+window.addEventListener('afterprint',()=>{ document.body.classList.remove('printing'); $('#printArea').innerHTML=''; });
+const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+
+/* ---------- Beeld kiezen en tekenen ---------- */
+let picTarget=null;
+function openPic(t,id){
+ picTarget={t,id};
+ $('#picDlgBody').innerHTML = ICON_CATS.map(([k,l])=>`<section class="stack" style="gap:8px"><h3>${l}</h3><div class="picgrid">${ICONS.filter(i=>i.cat===k).map(i=>`<button data-a="pick" data-v="${i.id}" id="pk-${i.id}"><svg viewBox="0 0 48 48" aria-hidden="true">${i.s}</svg>${esc(i.name)}</button>`).join('')}</div></section>`).join('');
+ $('#picDlg').showModal();
+}
+function setPic(pic){
+ const w=W(), {t,id}=picTarget||{};
+ if(t==='ev'){ const e=w.analysis.events.find(x=>x.id===id); if(e) e.pic=pic; }
+ if(t==='pers'){ const p=w.analysis.pers.find(x=>x.id===id); if(p) p.pic=pic; }
+ if(t==='pairA'||t==='pairB'){ const p=w.analysis.pairs.find(x=>x.id===id); if(p) p[t==='pairA'?'picA':'picB']=pic; }
+ if(t==='vak'){ const v=w.game.vakken.find(x=>x.id===id); if(v) v.pic=pic; }
+ render(); const back = t==='pairA'?`pic-${id}-a`:t==='pairB'?`pic-${id}-b`:`pic-${id}`; const b=document.getElementById(back); if(b) b.focus();
+}
+const cv=$('#cv'), cx=cv.getContext('2d'); let drawing=false, penCol='#1F2B5D';
+function clearCanvas(){ cx.fillStyle='#fff'; cx.fillRect(0,0,cv.width,cv.height); }
+$('#sw').innerHTML = ['#1F2B5D','#5C2266','#EE312D','#ECE828','#64BC46','#1F58A8','#5EC8D8','#F59395','#FFFFFF'].map((c,i)=>`<label style="background:${c}"><input type="radio" name="col" value="${c}" ${i===0?'checked':''} aria-label="${['donkerblauw','paars','rood','geel','groen','blauw','turquoise','roze','gum (wit)'][i]}"></label>`).join('');
+$('#sw').addEventListener('change',e=>{penCol=e.target.value;});
+const ptr = e => { const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]; };
+cv.addEventListener('pointerdown',e=>{drawing=true;cv.setPointerCapture(e.pointerId);const [x,y]=ptr(e);cx.beginPath();cx.moveTo(x,y);cx.lineTo(x+.1,y+.1);stroke();});
+cv.addEventListener('pointermove',e=>{if(!drawing)return;const [x,y]=ptr(e);cx.lineTo(x,y);stroke();});
+cv.addEventListener('pointerup',()=>drawing=false); cv.addEventListener('pointercancel',()=>drawing=false);
+function stroke(){ cx.strokeStyle=penCol; cx.lineWidth=+document.querySelector('input[name=pen]:checked').value; cx.lineCap='square'; cx.lineJoin='miter'; cx.stroke(); }
+
+/* ---------- Gebeurtenissen ---------- */
+const handlers = {
+ nav:(b)=>{ S.view=b.dataset.v; S.ui.codeErr=''; render(); window.scrollTo(0,0); $('#nav-'+S.view)?.focus(); },
+ goal:(b)=>{ S.lesson.goal=b.dataset.v; S.groups.forEach(g=>g.termCount=Math.min(g.termCount,GOAL_TERMS[b.dataset.v].length)); S.ui.openTerm=null; render(); },
+ mode:(b)=>{ S.lesson.mode=b.dataset.v; render(); },
+ pimg:(b)=>{ S.lesson.paperImages=b.dataset.v; render(); },
+ terms:(b)=>{ const g=S.groups.find(x=>x.id===b.dataset.g); g.termCount=Math.max(0,Math.min(GOAL_TERMS[S.lesson.goal].length,g.termCount+ +b.dataset.d)); render(); },
+ gadd:()=>{ S.groups.push(newGroup('Groepje '+(S.groups.length+1))); render(); const g=S.groups[S.groups.length-1]; document.getElementById('gn-'+g.id)?.focus(); },
+ gdel:(b)=>{ S.groups=S.groups.filter(g=>g.id!==b.dataset.g); if(S.active===b.dataset.g) S.active=null; render(); $('#gadd')?.focus(); },
+ start:()=>{ S.lesson.started=true; S.view='volgen'; render(); window.scrollTo(0,0); live('De les is gestart.'); },
+ opengroup:(b)=>{ S.active=b.dataset.g; S.view='leerlingen'; S.ui.codeIn=''; S.ui.codeErr=''; render(); window.scrollTo(0,0); $('#st-'+W().step)?.focus(); },
+ closegroup:()=>{ S.active=null; render(); },
+ step:(b)=>{ const g=G(); if(!canReach(g,b.dataset.v)) return; W().step=b.dataset.v; S.ui.confirmReset=false; render(); window.scrollTo(0,0); $('#st-'+b.dataset.v)?.focus(); },
+ term:(b)=>{ S.ui.openTerm = S.ui.openTerm===b.dataset.v?null:b.dataset.v; render(); },
+ evadd:()=>{ const t=(S.ui.neText||'').trim(); if(!t){ live('Schrijf eerst wat er gebeurt.'); $('#ne-text').focus(); return;} W().analysis.events.push(ev(t,S.ui.nePhase||'begin')); S.ui.neText=''; render(); $('#ne-text').focus(); live('Gebeurtenis toegevoegd bij '+PH(S.ui.nePhase||'begin').name+'.'); },
+ evmove:(b)=>{ const evs=W().analysis.events, e=evs.find(x=>x.id===b.dataset.id), same=evs.filter(x=>x.phase===e.phase), i=same.indexOf(e), j=i+ +b.dataset.d; if(j<0||j>=same.length) return; const a=evs.indexOf(e), c=evs.indexOf(same[j]); [evs[a],evs[c]]=[evs[c],evs[a]]; render(); const f=document.getElementById((+b.dataset.d<0?'up-':'dn-')+e.id); (f&&!f.disabled?f:document.getElementById('et-'+e.id)).focus(); live('Kaart verplaatst.'); },
+ evdel:(b)=>{ const a=W().analysis; a.events=a.events.filter(x=>x.id!==b.dataset.id); render(); $('#ne-text').focus(); live('Gebeurtenis verwijderd.'); },
+ padd:()=>{ const p=pers('', W().analysis.pers.some(x=>x.role==='hoofd')?'bij':'hoofd','','','','','','',null); W().analysis.pers.push(p); render(); document.getElementById('pn-'+p.id)?.focus(); },
+ pdel:(b)=>{ const a=W().analysis; a.pers=a.pers.filter(x=>x.id!==b.dataset.id); render(); $('#padd')?.focus(); },
+ madd:()=>{ const p=pair('po','','','',null,null); W().analysis.pairs.push(p); render(); document.getElementById('ma-'+p.id)?.focus(); },
+ mdel:(b)=>{ const a=W().analysis; a.pairs=a.pairs.filter(x=>x.id!==b.dataset.id); render(); $('#madd')?.focus(); },
+ pic:(b)=>openPic(b.dataset.t,b.dataset.id),
+ pick:(b)=>{ $('#picDlg').close(); setPic({type:'icon',id:b.dataset.v}); },
+ 'pic-none':()=>{ $('#picDlg').close(); setPic(null); },
+ 'pic-draw':()=>{ $('#picDlg').close(); clearCanvas(); $('#drawDlg').showModal(); },
+ 'draw-clear':()=>clearCanvas(),
+ 'draw-save':()=>{ const c2=document.createElement('canvas'); c2.width=c2.height=160; c2.getContext('2d').drawImage(cv,0,0,160,160); $('#drawDlg').close(); setPic({type:'draw',data:c2.toDataURL('image/png')}); },
+ 'dlg-close':(b)=>{ document.getElementById(b.dataset.d).close(); },
+ tocontrole:()=>{ const g=G(), w=W(); if(!checkStatus(g)) return; w.step='controle'; if(g.needsCheck && w.approval!=='akkoord') w.approval='wacht'; render(); $('#st-controle')?.focus(); live(g.needsCheck?'Jullie wachten op de leerkracht.':'Controle is niet nodig.'); },
+ 'approve-here':()=>{ if(S.ui.codeIn!==S.lesson.code){ S.ui.codeErr='Deze code klopt niet.'; render(); $('#code-in').focus(); return;} W().approval='akkoord'; S.ui.codeIn=''; S.ui.codeErr=''; render(); $('#ct-go')?.focus(); live('Akkoord gegeven.'); },
+ 'reject-here':()=>{ if(S.ui.codeIn!==S.lesson.code){ S.ui.codeErr='Deze code klopt niet.'; render(); $('#code-in').focus(); return;} const w=W(); w.approval='aanpassen'; w.step='analyse'; S.ui.codeIn=''; S.ui.codeErr=''; render(); $('#st-analyse')?.focus(); live('Het groepje past de analyse aan.'); },
+ approve:(b)=>{ const g=S.groups.find(x=>x.id===b.dataset.g); W(g).approval='akkoord'; render(); $('#open-'+g.id)?.focus(); live(g.name+' heeft akkoord.'); },
+ reject:(b)=>{ const g=S.groups.find(x=>x.id===b.dataset.g), w=W(g); w.approval='aanpassen'; w.step='analyse'; render(); $('#open-'+g.id)?.focus(); live(g.name+' past de analyse aan.'); },
+ tobouwen:()=>{ const g=G(); if(!canReach(g,'bouwen')) return; W().step='bouwen'; render(); window.scrollTo(0,0); $('#st-bouwen')?.focus(); },
+ regen:()=>{ S.ui.confirmReset=true; render(); $('#rs-no')?.focus(); },
+ 'regen-no':()=>{ S.ui.confirmReset=false; render(); $('#regen')?.focus(); },
+ 'regen-yes':()=>{ const w=W(); const gap=w.game?.gap; w.game=buildGame(S.lesson.goal,w.analysis); if(gap!=null&&w.game.gap!=null) w.game.gap=gap; w.play=null; S.ui.confirmReset=false; render(); $('#regen')?.focus(); live('Het spel is opnieuw gemaakt uit de analyse.'); },
+ roll:()=>{ const w=W(), p=w.play, track=padTrack(w.game), last=track.length-1; const r=1+Math.floor(Math.random()*6); p.roll=r; p.pos[p.turn]=Math.min(last,p.pos[p.turn]+r); const at=track[p.pos[p.turn]];
+  if(p.pos[p.turn]>=last){ p.win=p.turn; p.log=''; render(); live(p.names[p.turn]+' gooit '+r+' en is bij het einde. Gewonnen!'); $('#again')?.focus(); return; }
+  if(at.kind==='vak'){ p.card=p.pos[p.turn]; p.log=`${p.names[p.turn]} gooit ${r} en komt op vak ${at.n}.`; render(); live(p.log+' Lees de spelkaart.'); $('#taskcard')?.focus(); return; }
+  p.log=`${p.names[p.turn]} gooit ${r}.`; const was=p.turn; p.turn=(p.turn+1)%p.teams; p.log+=` Nu is ${p.names[p.turn]} aan de beurt.`; render(); live(p.log); $('#roll')?.focus(); },
+ 'tc-ok':()=>{ const p=W().play; p.card=null; p.turn=(p.turn+1)%p.teams; p.log=`Goed gespeeld. Nu is ${p.names[p.turn]} aan de beurt.`; render(); live(p.log); $('#roll')?.focus(); },
+ 'tc-no':()=>{ const w=W(), p=w.play, v=padTrack(w.game)[p.card].v; p.pos[p.turn]=Math.max(0,p.pos[p.turn]-v.back); p.card=null; const nm=p.names[p.turn]; p.turn=(p.turn+1)%p.teams; p.log=`${nm} gaat ${v.back} ${v.back===1?'stap':'stappen'} terug. Nu is ${p.names[p.turn]} aan de beurt.`; render(); live(p.log); $('#roll')?.focus(); },
+ padreset:()=>{ const p=W().play; Object.assign(p,{pos:[0,0,0,0],turn:0,roll:null,card:null,win:null,log:''}); render(); $('#roll')?.focus(); live('Nieuw spel. Alle pionnen staan op Start.'); },
+ flip:(b)=>{ const p=W().play, i=+b.dataset.v; if(p.state!=='pick'||p.open.includes(i)) return; p.open.push(i);
+  if(p.open.length===2){ const [x,y]=p.open.map(k=>p.cards[k]); p.state = x.pid===y.pid ? 'pair':'nopair'; render(); live(p.state==='pair'?'Deze kaarten horen bij elkaar. Leg uit waarom.':'Geen paar.'); $('#taskcard')?.focus(); }
+  else { render(); live('Kaart omgedraaid. Kies nog een kaart.'); const nx=document.querySelector('.mcard[data-a="flip"]:not([disabled])'); (document.getElementById('mc'+(i+1))&&!document.getElementById('mc'+(i+1)).disabled?document.getElementById('mc'+(i+1)):nx)?.focus(); } },
+ 'mm-ok':()=>{ const w=W(), p=w.play, pid=p.cards[p.open[0]].pid; p.taken[pid]=p.turn; p.won[p.turn].push(pid); p.open=[]; p.state='pick'; const done=Object.keys(p.taken).length===w.game.pairs.length; render(); live(done?'Alle paren zijn gevonden.':`${p.names[p.turn]} houdt het paar en is nog een keer.`); document.querySelector('.mcard[data-a="flip"]')?.focus(); },
+ 'mm-no':()=>{ const p=W().play; p.open=[]; p.state='pick'; p.turn=1-p.turn; render(); live(`Kaarten teruggedraaid. ${p.names[p.turn]} is aan de beurt.`); document.querySelector('.mcard[data-a="flip"]')?.focus(); },
+ 'mm-next':()=>{ const p=W().play; p.open=[]; p.state='pick'; p.turn=1-p.turn; render(); live(`${p.names[p.turn]} is aan de beurt.`); document.querySelector('.mcard[data-a="flip"]')?.focus(); },
+ memreset:()=>{ W().play=null; render(); live('Nieuw spel. De kaarten zijn geschud.'); },
+ dlpaper:()=>printPages(),
+ dlgame:()=>{ const g=G(); saveFile(`${slug(GOALS[S.lesson.goal].game)}-${slug(g.name)}.html`, gameDoc(g), '#dlg-msg'); },
+};
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-a]'); if(!b||b.disabled) return; const h=handlers[b.dataset.a]; if(h){ e.preventDefault(); h(b); } });
+document.addEventListener('input',e=>{ const t=e.target, k=t.dataset.in; if(!k) return; const w=S.active?W():null, v=t.value;
+ if(k==='title') S.lesson.title=v;
+ if(k==='code') S.lesson.code=v.trim();
+ if(k==='gname') S.groups.find(g=>g.id===t.dataset.g).name=v;
+ if(k==='tnote') W(S.groups.find(g=>g.id===t.dataset.g)).note=v;
+ if(k==='netext') S.ui.neText=v;
+ if(k==='evtext') w.analysis.events.find(x=>x.id===t.dataset.id).text=v;
+ if(k==='pfield') w.analysis.pers.find(x=>x.id===t.dataset.id)[t.dataset.f]=v;
+ if(k==='mfield') w.analysis.pairs.find(x=>x.id===t.dataset.id)[t.dataset.f]=v;
+ if(k==='cktext'){ w.checks.text=v; syncCheckBtn(); }
+ if(k==='codein') S.ui.codeIn=v.trim();
+ if(k==='note') w.note=v;
+ if(k==='vtext') w.game.vakken.find(x=>x.id===t.dataset.id).text=v;
+ if(k==='vopt') w.game.vakken.find(x=>x.id===t.dataset.id)[t.dataset.f]=v;
+ if(k==='kcard') w.game.sets.find(x=>x.id===t.dataset.s).cards.find(c=>c.k===t.dataset.k).text=v;
+ if(k==='mcard') w.game.pairs.find(x=>x.id===t.dataset.id)[t.dataset.f]=v;
+ if(k==='tname') w.play.names[+t.dataset.v]=v;
+ if(k==='mtname') w.play.names[+t.dataset.v]=v;
+ if(['evtext','pfield','mfield'].includes(k)) syncNext();
+});
+function syncCheckBtn(){ const b=$('#ck-next'); if(!b) return; const ok=checkStatus(G()); b.disabled=!ok; $('#ck-st').textContent= ok?'Alles is afgevinkt en ingevuld.':'Vink alles af en beantwoord de vraag om verder te gaan.'; const sc=$('#st-controle'); if(sc) sc.disabled=!ok; }
+function syncNext(){ const b=$('#next-check'); if(!b) return; const st=analysisStatus(S.lesson.goal,W().analysis); b.disabled=!st.ok; const p=b.previousElementSibling; if(p) p.innerHTML=`<strong>${st.ok?'Klaar om te checken.':'Nog niet klaar.'}</strong> ${esc(st.msg)}`; const sc=$('#st-check'); if(sc) sc.disabled=!st.ok; }
+document.addEventListener('change',e=>{ const t=e.target, k=t.dataset.ch; if(!k) return; const w=S.active?W():null;
+ if(k==='needs'){ S.groups.find(g=>g.id===t.dataset.g).needsCheck=t.checked; render(); return; }
+ if(k==='nephase'){ S.ui.nePhase=t.value; return; }
+ if(k==='evphase'){ const e=w.analysis.events.find(x=>x.id===t.dataset.id), a=w.analysis.events; a.splice(a.indexOf(e),1); e.phase=t.value; a.push(e); render(); document.getElementById('ep-'+e.id)?.focus(); live('Gebeurtenis verplaatst naar '+PH(t.value).name+'.'); return; }
+ if(k==='prole'){ w.analysis.pers.find(x=>x.id===t.dataset.id).role=t.value; render(); return; }
+ if(k==='prol'){ w.analysis.pers.find(x=>x.id===t.dataset.id).rol=t.value; return; }
+ if(k==='mkind'){ w.analysis.pairs.find(x=>x.id===t.dataset.id).kind=t.value; render(); return; }
+ if(k==='ck'){ w.checks.items[t.dataset.v]=t.checked; syncCheckBtn(); return; }
+ if(k==='ckt'){ w.checks.terms[t.dataset.v]=t.checked; syncCheckBtn(); return; }
+ if(k==='gap'){ w.game.gap=+t.value; w.play=null; render(); return; }
+ if(k==='vtask'){ const v=w.game.vakken.find(x=>x.id===t.dataset.id); const wasDef=Object.values(TASKS).some(x=>x.def===v.text); v.task=t.value; if(wasDef||!v.text.trim()) v.text=TASKS[t.value].def; render(); return; }
+ if(k==='vback'){ w.game.vakken.find(x=>x.id===t.dataset.id).back=+t.value; return; }
+ if(k==='teams'){ w.play.teams=+t.value; w.play.turn=Math.min(w.play.turn,w.play.teams-1); render(); return; }
+});
+/* Slepen met muis (de keuzelijst onder elke kaart is het alternatief) */
+document.addEventListener('dragstart',e=>{ const a=e.target.closest?.('[data-drag]'); if(!a) return; if(['TEXTAREA','SELECT','BUTTON'].includes(document.activeElement?.tagName) && a.contains(document.activeElement)) {} e.dataTransfer.setData('text/plain',a.dataset.drag); e.dataTransfer.effectAllowed='move'; });
+document.addEventListener('dragover',e=>{ const c=e.target.closest?.('[data-drop]'); if(!c) return; e.preventDefault(); document.querySelectorAll('.col.drop').forEach(x=>x!==c&&x.classList.remove('drop')); c.classList.add('drop'); });
+document.addEventListener('dragleave',e=>{ const c=e.target.closest?.('[data-drop]'); if(c && !c.contains(e.relatedTarget)) c.classList.remove('drop'); });
+document.addEventListener('drop',e=>{ const c=e.target.closest?.('[data-drop]'); if(!c) return; e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); const a=W().analysis.events, ev2=a.find(x=>x.id===id); if(!ev2) return;
+ // plaats vóór de kaart waarop is losgelaten, anders achteraan in dit deel
+ const over=e.target.closest('[data-drag]'); a.splice(a.indexOf(ev2),1); ev2.phase=c.dataset.drop;
+ if(over && over.dataset.drag!==id){ const o=a.find(x=>x.id===over.dataset.drag); a.splice(a.indexOf(o),0,ev2); } else a.push(ev2);
+ render(); live('Gebeurtenis verplaatst naar '+PH(ev2.phase).name+'.'); });
+
+/* Voor het maken van de PDF-werkbladen */
+window.__print = (goal,img) => { const keep=[...document.querySelectorAll('style,link')].map(x=>x.outerHTML).join(''); document.body.innerHTML = keep + paperPages(goal,img).join(''); document.body.style.background='#fff'; };
+
+render();
+</script>
+
+</body>
+</html>
